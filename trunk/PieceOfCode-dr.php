@@ -1,0 +1,66 @@
+<?php
+/**
+ * @file PieceOfCode-dr.php
+ *
+ * Subversion
+ *	- ID:  $Id$
+ *	- URL: $URL$
+ *
+ * @copyright 2010 Alejandro Darío Simi
+ * @license GPL
+ * @author Alejandro Darío Simi
+ * @date 2010-08-28
+ */
+require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'config.php');
+require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCSVNConnections.php');
+require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCStoredCodes.php');
+require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCCodeExtractor.php');
+require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php');
+
+/**
+ * Register function.
+ */
+function PieceOfCode_Hooker() {
+	PieceOfCode::Instance();
+}
+
+if(!defined('MEDIAWIKI')) {
+	die();
+} else {
+	/**
+	 * MediaWiki Extension hooks Setter.
+	 */
+	$wgExtensionFunctions[]               = 'PieceOfCode_Hooker';
+	//	$wgHooks['BeforePageDisplay'][]       = 'Xml2Wiki_HeadHooker';
+	//	$wgAjaxExportList[]                   = 'X2WParser::AjaxParser';
+	$wgExtensionMessagesFiles['PieceOfCode'] = dirname( __FILE__ ).DIRECTORY_SEPARATOR.'PieceOfCode-dr.i18n.php';
+
+	$wgAutoloadClasses  ['PieceOfCode'] = dirname( __FILE__ ).DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php';
+	$wgSpecialPages     ['PieceOfCode'] = 'PieceOfCode';
+	$wgSpecialPageGroups['PieceOfCode'] = 'other';
+
+	/**
+	 * MediaWiki Extension Description.
+	 */
+	$wgExtensionCredits['parserhook'][] = array(
+		'name'            => PieceOfCode::Property('name'),
+		'version'         => PieceOfCode::Property('version'),
+		'date'            => PieceOfCode::Property('date'),
+		'description'     => PieceOfCode::Property('description'),
+		'descriptionmsg'  => PieceOfCode::Property('descriptionmsg'),
+		'author'          => PieceOfCode::Property('author'),
+		'url'             => PieceOfCode::Property('url'),
+		'svn-date'        => PieceOfCode::Property('svn-date'),
+		'svn-revision'    => PieceOfCode::Property('svn-revision'),
+	);
+	$wgExtensionCredits['specialpage'][] = array(
+		'name'            => PieceOfCode::Property('name'),
+		'version'         => PieceOfCode::Property('version'),
+		'date'            => PieceOfCode::Property('date'),
+		'description'     => PieceOfCode::Property('sinfo-description'),
+		'descriptionmsg'  => PieceOfCode::Property('sinfo-descriptionmsg'),
+		'author'          => PieceOfCode::Property('author'),
+		'url'             => PieceOfCode::Property('url'),
+	);
+}
+?>
