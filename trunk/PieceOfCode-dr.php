@@ -23,6 +23,18 @@ require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php');
 function PieceOfCode_Hooker() {
 	PieceOfCode::Instance();
 }
+function PieceOfCode_HeadHooker(&$out, &$sk) {
+	global	$wgPieceOfCodeConfig;
+
+	if($wgPieceOfCodeConfig['autocss']) {
+		global	$wgScriptPath;
+
+		$script = $wgScriptPath.'/extensions/'.basename(dirname(__FILE__)).'/includes/style.css';
+		$out->addScript('<link type="text/css" rel="stylesheet" href="'.$script.'"/>');
+	}
+
+	return true;
+}
 
 if(!defined('MEDIAWIKI')) {
 	die();
@@ -30,9 +42,8 @@ if(!defined('MEDIAWIKI')) {
 	/**
 	 * MediaWiki Extension hooks Setter.
 	 */
-	$wgExtensionFunctions[]               = 'PieceOfCode_Hooker';
-	//	$wgHooks['BeforePageDisplay'][]       = 'Xml2Wiki_HeadHooker';
-	//	$wgAjaxExportList[]                   = 'X2WParser::AjaxParser';
+	$wgExtensionFunctions[]                  = 'PieceOfCode_Hooker';
+	$wgHooks['BeforePageDisplay'][]          = 'PieceOfCode_HeadHooker';
 	$wgExtensionMessagesFiles['PieceOfCode'] = dirname( __FILE__ ).DIRECTORY_SEPARATOR.'PieceOfCode-dr.i18n.php';
 
 	$wgAutoloadClasses  ['PieceOfCode'] = dirname( __FILE__ ).DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php';

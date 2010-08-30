@@ -16,7 +16,7 @@ class POCStoredCodes {
 	/**
 	 * @var POCStoredCodes
 	 */
-	protected static	$_Instance = null;
+	private static	$_Instance;
 
 	/**
 	 * @var bool
@@ -26,20 +26,20 @@ class POCStoredCodes {
 	 * @var string
 	 */
 	protected	$_dbtype;
-	/**
-	 * @var PieceOfCode
-	 */
-	protected	$_pocInstance;
 
 	protected function __construct() {
 		global $wgDBtype;
-
-		//		$this->_pocInstance = PieceOfCode::Instance();
 
 		$this->_isLoaded    = false;
 		$this->_dbtype      = $wgDBtype;
 
 		$this->createTable();
+	}
+	/**
+	 * Prevent users to clone the instance.
+	 */
+	public function __clone() {
+		trigger_error('Clone is not allowed.', E_USER_ERROR);
 	}
 
 	/*
@@ -57,9 +57,10 @@ class POCStoredCodes {
 		if($conn) {
 			global	$wgPieceOfCodeConfig;
 
+			$this->setLastError();
 			$fileInfo = $this->selectFiles($connection, $filepath, $revision);
-
-			if(!$fileInfo) {
+				
+			if(!$fileInfo && !$this->getLastError()) {
 				global	$wgUser;
 
 				$code   = md5("{$connection}{$revision}{$filepath}");
@@ -74,20 +75,28 @@ class POCStoredCodes {
 					'code'		=> $code,
 					'path'		=> $filepath,
 					'revision'	=> $revision,
+					'lang'		=> $this->getLangFromExtension($filepath),
 					'upload_path'	=> $uploadPath,
 					'user'		=> $wgUser->getName(),
 				);
 
-				if($this->getSVNFile($conn, $auxFileInfo)) {
+				if(!$this->getLastError() && $this->getSVNFile($conn, $auxFileInfo)) {
 					$this->insertFile($auxFileInfo);
-
-					$fileInfo = $this->selectFiles($connection, $filepath, $revision);
+						
+					if(!$this->getLastError()) {
+						$out = $this->selectFiles($connection, $filepath, $revision);
+					}
 				} else {
-					die(__FILE__.":".__LINE__);
+					echo("<h4>".$this->getLastError()."</h4>"); //@todo ver por qué este mensage no llega a POC para ser impreso.
+					if(!$this->getLastError()) {
+						$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-svn-file', $connection, $filepath, $revision)));
+					}
 				}
+			} else {
+				$out = $fileInfo;
 			}
-
-			$out = $fileInfo;
+		} else {
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-invalid-connection')));
 		}
 
 		return $out;
@@ -145,6 +154,8 @@ class POCStoredCodes {
 					);
 				}
 			}
+		} else {
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
 		}
 
 		return $out;
@@ -185,38 +196,57 @@ class POCStoredCodes {
 					die(__FILE__.":".__LINE__);
 				}
 			}
-
+		} else {
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
 		}
 
 		return $out;
 	}
+	/**
+	 * @todo doc
+	 * @param string $msg @todo doc
+	 */
+	protected function formatErrorMessage($msg) {
+		return PieceOfCode::Instance()->formatErrorMessage($msg);
+	}
+	/**
+	 * @todo doc
+	 * @param string $filename @todo doc
+	 */
 	protected function getLangFromExtension($filename) {
 		$out = '';
 
-		$pieces = explode('.', $filename);
-		switch($pieces[count($pieces)-1]) {
-			case 'C':
-			case 'c':
-			case 'cpp':
-			case 'H':
-			case 'h':
-			case 'hpp':
-				$out = 'cpp';
+		global	$wgPieceOfCodeConfig;
+
+		$pieces = explode('.', basename($filename));
+		$len    = count($pieces);
+		if($len > 1) {
+		$ext    = $pieces[$len-1];
+		foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $extList) {
+			if(in_array($ext, $extList)) {
+				$out = $type;
 				break;
-			case 'mk':
-			case 'sh':
-				$out = 'bash';
-				break;
-			case 'inc':
-			case 'php3':
-			case 'php':
-				$out = 'php';
-				break;
-			default:
-				$out = 'text';
+			}
+		}
+		if(!$out && in_array($ext, $wgPieceOfCodeConfig['fontcodes-forbidden'])) {
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-forbidden-tcode', $pieces[count($pieces)-1])));
+		} elseif(!$out) {
+				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-tcode', $pieces[count($pieces)-1])));
+			$out = 'text';
+		}
+		} elseif($wgPieceOfCodeConfig['fontcodes-allowempty']) {
+			$out = 'text';
+		} else {
+				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-empty-tcode')));
 		}
 
 		return $out;
+	}
+	/**
+	 * @todo doc
+	 */
+	protected function getLastError() {
+		return PieceOfCode::Instance()->getLastError();
 	}
 	/**
 	 * @todo doc
@@ -240,14 +270,14 @@ class POCStoredCodes {
 			}
 			$command.= "> '{$filepath}'";
 			passthru($command, $error);
-				
+
 			if(!$error && is_readable($filepath)) {
 				$out = true;
 			} elseif($error && is_readable($filepath)) {
 				unlink($filepath);
 			}
 		} else {
-			die(__FILE__.":".__LINE__.": {$filepath}");
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-svn-file-exist', $filepath)));
 		}
 
 		return $out;
@@ -264,28 +294,35 @@ class POCStoredCodes {
 			global	$wgUser;
 			global	$wgPieceOfCodeConfig;
 
-			$dbr = &wfGetDB(DB_SLAVE);
-			$res = $dbr->insert($wgPieceOfCodeConfig['db-tablename'],
-			array(	'cod_connection'	=> $fileInfo['connection'],
+			if(!$this->getLastError()) {
+				$dbr = &wfGetDB(DB_SLAVE);
+				$res = $dbr->insert($wgPieceOfCodeConfig['db-tablename'],
+				array(	'cod_connection'	=> $fileInfo['connection'],
 						'cod_code'		=> $fileInfo['code'],
 						'cod_path'		=> $fileInfo['path'],
-						'cod_lang'		=> $this->getLangFromExtension($fileInfo['path']),
+						'cod_lang'		=> $fileInfo['lang'],
 						'cod_revision'		=> $fileInfo['revision'],
 						'cod_upload_path'	=> $fileInfo['upload_path'],
 						'cod_user'		=> $wgUser->getName(),
-			));
-			if($res === true) {
-				$out = true;
+				));
+				if($res === true) {
+					$out = true;
+				} else {
+					$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-insert')));
+				}
 			}
+		} else {
+			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
 		}
 
 		return	$out;
 	}
 	/**
 	 * @todo doc
+	 * @param string $msg @todo doc
 	 */
-	protected function load() {
-		return $this->isLoaded();
+	protected function setLastError($msg="") {
+		return PieceOfCode::Instance()->setLastError($msg);
 	}
 
 	/*
@@ -295,10 +332,12 @@ class POCStoredCodes {
 	 * @todo doc
 	 */
 	public static function Instance() {
-		if(!POCStoredCodes::$_Instance) {
-			POCStoredCodes::$_Instance = new POCStoredCodes();
+		if (!isset(self::$_Instance)) {
+			$c = __CLASS__;
+			self::$_Instance = new $c;
 		}
-		return POCStoredCodes::$_Instance;
+
+		return self::$_Instance;
 	}
 }
 

@@ -23,7 +23,24 @@ if(!isset($wgPieceOfCodeSVNConnections)) {
  * Configuration.
  * @{
  */
+if(!isset($wgPieceOfCodeConfig) || !is_array($wgPieceOfCodeConfig)) {
+	$wgPieceOfCodeConfig = array();
+}
+/**
+ * Allows to enable/disable internal CSS-file inclution.
+ * @var bool
+ */
+$wgPieceOfCodeConfig['autocss']	= true;
+/**
+ * Subversion.
+ * 	@{
+ */
+/**
+ * Specifies SVN command full-path.
+ * @var string
+ */
 $wgPieceOfCodeConfig['svn-binary']	= '/usr/bin/svn';
+/**	@} */
 /**
  * Uploading codes.
  * 	@{
@@ -36,6 +53,18 @@ $wgPieceOfCodeConfig['enableuploads']	= $wgEnableUploads;
  * 	@{
  */
 $wgPieceOfCodeConfig['db-tablename']	= 'poc_codes';
+/** 	@} */
+/**
+ * Font-code types.
+ * 	@{
+ */
+$wgPieceOfCodeConfig['fontcodes']		= array();
+$wgPieceOfCodeConfig['fontcodes']['bash']	= array('sh', 'mk', 'mak');
+$wgPieceOfCodeConfig['fontcodes']['cpp']	= array('C', 'c', 'cpp', 'H', 'h', 'hpp');
+$wgPieceOfCodeConfig['fontcodes']['php']	= array('inc', 'php3', 'php');
+$wgPieceOfCodeConfig['fontcodes']['text']	= array('txt');
+$wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z', 'gz');
+$wgPieceOfCodeConfig['fontcodes-allowempty']	= false;
 /** 	@} */
 /** @} */
 ?>
