@@ -2,5 +2,8 @@ TODO:
 	* Improve error reporting.
 	* Check user permission for uploading.
 	* Give a tool to eliminate files.
-	* Make title on <pieceofcode> a link.
-	* Trim numbers from lines specification on <pieceofcode>.
+	* Register what article includes what font-code.
+	* SpecialPage: separate REQUEST actions.
+		** just info.
+		** show code
+		** others...

@@ -23,11 +23,17 @@ class POCSVNConnections {
 	 */
 	protected	$_connections;
 	/**
+	 * @var POCErrorsHolder
+	 */
+	protected	$_errors;
+	/**
 	 * @var bool
 	 */
 	protected	$_isLoaded;
 
 	protected function __construct() {
+		$this->_errors = POCErrorsHolder::Instance();
+
 		$this->_connections = array();
 		$this->_isLoaded    = false;
 
@@ -37,7 +43,7 @@ class POCSVNConnections {
 	 * Prevent users to clone the instance.
 	 */
 	public function __clone() {
-		trigger_error('Clone is not allowed.', E_USER_ERROR);
+		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
 	
 	/*
@@ -61,19 +67,6 @@ class POCSVNConnections {
 	 */
 	/**
 	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function formatErrorMessage($msg) {
-		return PieceOfCode::Instance()->formatErrorMessage($msg);
-	}
-	/**
-	 * @todo doc
-	 */
-	protected function getLastError() {
-		return PieceOfCode::Instance()->getLastError();
-	}
-	/**
-	 * @todo doc
 	 */
 	protected function load() {
 		global	$wgPieceOfCodeSVNConnections;
@@ -92,13 +85,6 @@ class POCSVNConnections {
 		$this->_isLoaded = true;
 
 		return $this->isLoaded();
-	}
-	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function setLastError($msg="") {
-		return PieceOfCode::Instance()->setLastError($msg);
 	}
 
 	/*

@@ -40,6 +40,10 @@ class PieceOfCode extends SpecialPage {
 						'svn-revision'         => '$LastChangedRevision$',
 	);
 	/**
+	 * @var POCErrorsHolder
+	 */
+	protected	$_errors;
+	/**
 	 * Error messages prefix.
 	 * @var string
 	 */
@@ -84,16 +88,17 @@ class PieceOfCode extends SpecialPage {
 			$wgParser->setHook('pieceofcode', array(&$this, 'parse'));
 		}
 
-		$this->setLastError();
-
+		$this->_errors         = POCErrorsHolder::Instance();
 		$this->_svnConnections = POCSVNConnections::Instance();
 		$this->_storedCodes    = POCStoredCodes::Instance();
+
+		$this->_errors->clearError();
 	}
 	/**
 	 * Prevent users to clone the instance.
 	 */
 	public function __clone() {
-		trigger_error('Clone is not allowed.', E_USER_ERROR);
+		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
 	/*
 	 * Public Methods.
@@ -110,6 +115,7 @@ class PieceOfCode extends SpecialPage {
 		global	$wgAllowExternalImages;
 		global	$wgPieceOfCodeConfig;
 		global	$wgEnableUploads;
+		global	$wgPieceOfCodeExtensionWebDir;
 
 		$this->setHeaders();
 
@@ -127,7 +133,7 @@ class PieceOfCode extends SpecialPage {
 			$fontcode['showit'] = ($fontcode['connection'] !== null && $fontcode['path'] !== null && $fontcode['revision'] !== null);
 
 			if($fontcode['showit']) {
-				$this->setLastError();
+				$this->_errors->clearError();
 				$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
 
 				if($fileInfo) {
@@ -146,22 +152,20 @@ class PieceOfCode extends SpecialPage {
 					$out.= file_get_contents($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path']);
 					$out.= "</{$tag}></div>";
 				} else {
-					if(!$this->getLastError()) {
-						$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision'])));
+					if(!$this->_errors->getLastError()) {
+						$this->_errors->setLastError(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision']));
 					}
-					$out.=$this->getLastError();
+					$out.=$this->_errors->getLastError();
 				}
 				$wgOut->addWikiText($out);
 				return;
 			}
 		}
 		/*
-		 * Section: Extension information.
-		 * @{
-		 */
-		if($wgAllowExternalImages) {
-			$out.= "\t\t<span style=\"float:right;text-align:center;\">http://wiki.daemonraco.com/wiki/dr.png<br/>[http://wiki.daemonraco.com/ DAEMonRaco]</span>\n";
-		}
+		* Section: Extension information.
+		* @{
+		*/
+		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>\n";
 		$out.= "\t\t<h2>".wfMsg('poc-sinfo-extension-information')."</h2>\n";
 		$out.= "\t\t<ul>\n";
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-name').":</strong> ".PieceOfCode::Property('name')."</li>\n";
@@ -187,14 +191,15 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</ul>\n";
 		/* @} */
 		/*
-		 * Section: SVN Connections.
-		 * @{
-		 */
+		* Section: SVN Connections.
+		* @{
+		*/
 		$out.= "\t\t<h2>".wfMsg('poc-sinfo-svn-connections')."</h2>\n";
 		$out.= "\t\t<table class=\"wikitable\">\n";
 		$out.= "\t\t\t<tr>\n";
 		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-svn-connections')."</th>\n";
 		$out.= "\t\t\t</tr>\n";
+		ksort($wgPieceOfCodeSVNConnections);
 		foreach($wgPieceOfCodeSVNConnections as $ksvnconn => $svnconn) {
 			$out.= "\t\t\t<tr>\n";
 			$out.= "\t\t\t\t<th rowspan=\"3\" style=\"text-align:left\">{$ksvnconn}</th>\n";
@@ -211,41 +216,42 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</table>\n";
 		/* @} */
 		/*
-		 * Section: Stored Codes.
-		 * @{
-		 */
+		* Section: Stored Codes.
+		* @{
+		*/
 		$out.= "\t\t<h2>".wfMsg('poc-sinfo-stored-codes')."</h2>\n";
 		$out.= "\t\t<table class=\"wikitable sortable\">\n";
 		$out.= "\t\t\t<tr>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-conn')."</th>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-code')."</th>\n";
+		//$out.= "\t\t\t\t<th class=\"unsortable\">".wfMsg('poc-sinfo-stored-codes-code')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-path')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-lang')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-rev')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-user')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-date')."</th>\n";
-		$out.= "\t\t\t\t<th></th>\n";
+		$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></th>\n";
 		$out.= "\t\t\t</tr>\n";
 		$files = POCStoredCodes::Instance()->selectFiles();
 		foreach($files as $fileInfo) {
 			$out.= "\t\t\t<tr>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['connection']}</td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['code']}</td>\n";
+			//$out.= "\t\t\t\t<td>{$fileInfo['code']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['path']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['lang']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['revision']}</td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['user']}</td>\n";
+			$auxUrl = Title::makeTitle(NS_USER,$fileInfo['user'])->escapeFullURL();
+			$out.= "\t\t\t\t<td><a href=\"{$auxUrl}\">{$fileInfo['user']}</a></td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['timestamp']}</td>\n";
 			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
-			$out.= "\t\t\t\t<td>[{$auxUrl} ".wfMsg('poc-open')."]</td>\n";
+			$out.= "\t\t\t\t<th class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></th>\n";
 			$out.= "\t\t\t</tr>\n";
 		}
 		$out.= "\t\t</table>\n";
 		/* @} */
 		/*
-		 * Section: Links
-		 * @{
-		 */
+		* Section: Links
+		* @{
+		*/
 		$out.= "\t\t<h2>".wfMsg('poc-sinfo-links')."</h2>\n";
 		$out.= "\t\t<ul>\n";
 		$out.= "\t\t\t<li><strong>MediaWiki Extensions:</strong> http://www.mediawiki.org/wiki/Extension:PieceOfCode</li>\n";
@@ -254,7 +260,7 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</ul>\n";
 		/* @} */
 
-		$wgOut->addWikiText($out);
+		$wgOut->addHTML($out);
 	}
 	/**
 	 * @todo doc
@@ -284,9 +290,9 @@ class PieceOfCode extends SpecialPage {
 		$out = "";
 		$codeExtractor = new POCCodeExtractor();
 
-		$this->setLastError();
+		$this->_errors->clearError();
 		$out.= $codeExtractor->load($input, $params, $parser);
-		if(!$this->getLastError()) {
+		if(!$this->_errors->getLastError()) {
 			$out.= $codeExtractor->show();
 		}
 		//$out.= '<pre>';
@@ -307,7 +313,7 @@ class PieceOfCode extends SpecialPage {
 	 */
 	public function setLastError($msg="") {
 		$this->_lastError = $msg;
-		return $this->getLastError();
+		return $this->_errors->getLastError();
 	}
 	/**
 	 * @todo doc

@@ -19,6 +19,10 @@ class POCStoredCodes {
 	private static	$_Instance;
 
 	/**
+	 * @var POCErrorsHolder
+	 */
+	protected	$_errors;
+	/**
 	 * @var bool
 	 */
 	protected	$_isLoaded;
@@ -30,6 +34,8 @@ class POCStoredCodes {
 	protected function __construct() {
 		global $wgDBtype;
 
+		$this->_errors = POCErrorsHolder::Instance();
+
 		$this->_isLoaded    = false;
 		$this->_dbtype      = $wgDBtype;
 
@@ -39,7 +45,7 @@ class POCStoredCodes {
 	 * Prevent users to clone the instance.
 	 */
 	public function __clone() {
-		trigger_error('Clone is not allowed.', E_USER_ERROR);
+		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
 
 	/*
@@ -57,46 +63,50 @@ class POCStoredCodes {
 		if($conn) {
 			global	$wgPieceOfCodeConfig;
 
-			$this->setLastError();
+			$this->_errors->clearError();
 			$fileInfo = $this->selectFiles($connection, $filepath, $revision);
 				
-			if(!$fileInfo && !$this->getLastError()) {
+			if(!$fileInfo && !$this->_errors->getLastError()) {
 				global	$wgUser;
+				global	$wgPieceOfCodeConfig;
 
-				$code   = md5("{$connection}{$revision}{$filepath}");
-				$auxDir = $code[0].DIRECTORY_SEPARATOR.$code[0].$code[1].DIRECTORY_SEPARATOR;
-				if(!is_dir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir)) {
-					mkdir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir, 0755, true);
-				}
-				$uploadPath  = $auxDir.$code."_".$revision."_".basename($filepath);
-				$svnPath     = $conn['url'].$filepath;
-				$auxFileInfo = array(
-					'connection'	=> $connection,
-					'code'		=> $code,
-					'path'		=> $filepath,
-					'revision'	=> $revision,
-					'lang'		=> $this->getLangFromExtension($filepath),
-					'upload_path'	=> $uploadPath,
-					'user'		=> $wgUser->getName(),
-				);
+				if($wgPieceOfCodeConfig['enableuploads'] && in_array('upload', $wgUser->getRights())) {
+					$code   = md5("{$connection}{$revision}{$filepath}");
+					$auxDir = $code[0].DIRECTORY_SEPARATOR.$code[0].$code[1].DIRECTORY_SEPARATOR;
+					if(!is_dir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir)) {
+						mkdir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir, 0755, true);
+					}
+					$uploadPath  = $auxDir.$code."_".$revision."_".basename($filepath);
+					$svnPath     = $conn['url'].$filepath;
+					$auxFileInfo = array(
+						'connection'	=> $connection,
+						'code'		=> $code,
+						'path'		=> $filepath,
+						'revision'	=> $revision,
+						'lang'		=> $this->getLangFromExtension($filepath),
+						'upload_path'	=> $uploadPath,
+						'user'		=> $wgUser->getName(),
+					);
 
-				if(!$this->getLastError() && $this->getSVNFile($conn, $auxFileInfo)) {
-					$this->insertFile($auxFileInfo);
-						
-					if(!$this->getLastError()) {
-						$out = $this->selectFiles($connection, $filepath, $revision);
+					if(!$this->_errors->getLastError() && $this->getSVNFile($conn, $auxFileInfo)) {
+						$this->insertFile($auxFileInfo);
+
+						if(!$this->_errors->getLastError()) {
+							$out = $this->selectFiles($connection, $filepath, $revision);
+						}
+					} else {
+						if(!$this->_errors->getLastError()) {
+							$this->_errors->setLastError(wfMsg('poc-errmsg-no-svn-file', $connection, $filepath, $revision));
+						}
 					}
 				} else {
-					echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
-					if(!$this->getLastError()) {
-						$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-svn-file', $connection, $filepath, $revision)));
-					}
+					$this->_errors->setLastError(wfMsg('poc-errmsg-no-upload-rights'));
 				}
 			} else {
 				$out = $fileInfo;
 			}
 		} else {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-invalid-connection')));
+			$this->_errors->setLastError(wfMsg('poc-errmsg-invalid-connection'));
 		}
 
 		return $out;
@@ -155,7 +165,7 @@ class POCStoredCodes {
 				}
 			}
 		} else {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
 		}
 
 		return $out;
@@ -183,7 +193,7 @@ class POCStoredCodes {
 					"        cod_connection     varchar(20)  not null,\n".
 					"        cod_code           varchar(40)  not null,\n".
 					"        cod_path           varchar(255) not null,\n".
-					"        cod_lang	    varchar(10)  not null default 'text',\n".
+					"        cod_lang	    varchar(20)  not null default 'text',\n".
 					"        cod_revision	    integer      not null default '-1',\n".
 					"        cod_upload_path    varchar(255) not null,\n".
 					"        cod_user           varchar(40)  not null,\n".
@@ -197,17 +207,10 @@ class POCStoredCodes {
 				}
 			}
 		} else {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
 		}
 
 		return $out;
-	}
-	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function formatErrorMessage($msg) {
-		return PieceOfCode::Instance()->formatErrorMessage($msg);
 	}
 	/**
 	 * @todo doc
@@ -221,32 +224,26 @@ class POCStoredCodes {
 		$pieces = explode('.', basename($filename));
 		$len    = count($pieces);
 		if($len > 1) {
-		$ext    = $pieces[$len-1];
-		foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $extList) {
-			if(in_array($ext, $extList)) {
-				$out = $type;
-				break;
+			$ext    = strtolower($pieces[$len-1]);
+			foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $extList) {
+				if(in_array($ext, $extList)) {
+					$out = $type;
+					break;
+				}
 			}
-		}
-		if(!$out && in_array($ext, $wgPieceOfCodeConfig['fontcodes-forbidden'])) {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-forbidden-tcode', $pieces[count($pieces)-1])));
-		} elseif(!$out) {
-				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-tcode', $pieces[count($pieces)-1])));
-			$out = 'text';
-		}
+			if(!$out && in_array($ext, $wgPieceOfCodeConfig['fontcodes-forbidden'])) {
+				$this->_errors->setLastError(wfMsg('poc-errmsg-forbidden-tcode', $pieces[count($pieces)-1]));
+			} elseif(!$out) {
+					$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-tcode', $pieces[count($pieces)-1]));
+				$out = 'text';
+			}
 		} elseif($wgPieceOfCodeConfig['fontcodes-allowempty']) {
 			$out = 'text';
 		} else {
-				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-empty-tcode')));
+				$this->_errors->setLastError(wfMsg('poc-errmsg-empty-tcode'));
 		}
 
 		return $out;
-	}
-	/**
-	 * @todo doc
-	 */
-	protected function getLastError() {
-		return PieceOfCode::Instance()->getLastError();
 	}
 	/**
 	 * @todo doc
@@ -276,12 +273,10 @@ class POCStoredCodes {
 			} elseif($error && is_readable($filepath)) {
 				unlink($filepath);
 			} elseif(is_readable($filepath)) {
-				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-svn-no-file', $filepath)));
-				echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
+				$this->_errors->setLastError(wfMsg('poc-errmsg-svn-no-file', $filepath));
 			}
 		} else {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-svn-file-exist', $filepath)));
-			echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
+			$this->_errors->setLastError(wfMsg('poc-errmsg-svn-file-exist', $filepath));
 		}
 
 		return $out;
@@ -295,10 +290,9 @@ class POCStoredCodes {
 
 		if($this->_dbtype == 'mysql') {
 			global	$wgDBprefix;
-			global	$wgUser;
 			global	$wgPieceOfCodeConfig;
 
-			if(!$this->getLastError()) {
+			if(!$this->_errors->getLastError()) {
 				$dbr = &wfGetDB(DB_SLAVE);
 				$res = $dbr->insert($wgPieceOfCodeConfig['db-tablename'],
 				array(	'cod_connection'	=> $fileInfo['connection'],
@@ -307,26 +301,19 @@ class POCStoredCodes {
 						'cod_lang'		=> $fileInfo['lang'],
 						'cod_revision'		=> $fileInfo['revision'],
 						'cod_upload_path'	=> $fileInfo['upload_path'],
-						'cod_user'		=> $wgUser->getName(),
+						'cod_user'		=> $fileInfo['user'],
 				));
 				if($res === true) {
 					$out = true;
 				} else {
-					$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-insert')));
+					$this->_errors->setLastError(wfMsg('poc-errmsg-no-insert'));
 				}
 			}
 		} else {
-			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype)));
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
 		}
 
 		return	$out;
-	}
-	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function setLastError($msg="") {
-		return PieceOfCode::Instance()->setLastError($msg);
 	}
 
 	/*

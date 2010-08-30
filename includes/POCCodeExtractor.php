@@ -17,15 +17,15 @@ class POCCodeExtractor {
 	 * @var PieceOfCode
 	 */
 	protected	$_pocInstance;
-	/**
-	 * @var POCStoredCodes
-	 */
-	protected	$_storeCodes;
 
 	/**
 	 * @var string
 	 */
 	protected	$_connection;
+	/**
+	 * @var POCErrorsHolder
+	 */
+	protected	$_errors;
 	/**
 	 * @var array
 	 */
@@ -46,8 +46,14 @@ class POCCodeExtractor {
 	 * @var bool
 	 */
 	protected	$_showTitle;
+	/**
+	 * @var POCStoredCodes
+	 */
+	protected	$_storeCodes;
 
 	public  function __construct() {
+		$this->_errors = POCErrorsHolder::Instance();
+
 		$this->_pocInstance = PieceOfCode::Instance();
 		$this->_storeCodes  = POCStoredCodes::Instance();
 
@@ -74,17 +80,17 @@ class POCCodeExtractor {
 		 * Loading configuration from tags.
 		 */
 		$out.= $this->loadParams($params);
-		if(!$this->getLastError()) {
+		if(!$this->_errors->getLastError()) {
 			$out.= $this->loadVariables($input);
 		}
 
 		/*
 		 * Loading file information
 		 */
-		if(!$this->getLastError()) {
+		if(!$this->_errors->getLastError()) {
 			$this->_fileInfo = $this->_storeCodes->getFile($this->_connection, $this->_filename, $this->_revision);
 			if(!$this->_fileInfo) {
-				$out.=$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $this->_connection, $this->_filename, $this->_revision)));
+				$out.=$this->_errors->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $this->_connection, $this->_filename, $this->_revision)));
 			}
 		}
 
@@ -111,7 +117,8 @@ class POCCodeExtractor {
 
 			$out.= "<div class=\"PieceOfCode_code\">\n";
 			if($this->_showTitle) {
-				$out.="<span class=\"PieceOfCode_title\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</span>";
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("connection={$this->_connection}&path={$this->_filename}&revision={$this->_revision}");
+				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a></span>";
 			}
 
 			if(isset($this->_lines[0])) {
@@ -151,19 +158,6 @@ class POCCodeExtractor {
 		$this->_lines      = array();
 
 		$this->_fileInfo = null;
-	}
-	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function formatErrorMessage($msg) {
-		return $this->_pocInstance->formatErrorMessage($msg);
-	}
-	/**
-	 * @todo doc
-	 */
-	protected function getLastError() {
-		return $this->_pocInstance->getLastError();
 	}
 	/**
 	 * Return parameters from mediaWiki;
@@ -213,19 +207,23 @@ class POCCodeExtractor {
 		$this->_connection = $this->getVariable($input, 'connection');
 		$this->_lines      = explode('-', $this->getVariable($input, 'lines'));
 
-		if(!isset($this->_lines[0]) || !isset($this->_lines[1]) || $this->_lines[0] > $this->_lines[1]) {
+		/*
+		 * Checking lines values.
+		 */
+		if(isset($this->_lines[0]) && isset($this->_lines[1])) {
+			$this->_lines[0] = trim($this->_lines[0]);
+			$this->_lines[1] = trim($this->_lines[1]);
+
+			if($this->_lines[0] > $this->_lines[1]) {
+				unset($this->_lines);
+				$this->_lines = array();
+			}
+		} else {
 			unset($this->_lines);
 			$this->_lines = array();
 		}
 
 		return $out;
-	}
-	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
-	 */
-	protected function setLastError($msg="") {
-		return $this->_pocInstance->setLastError($msg);
 	}
 
 	/*
