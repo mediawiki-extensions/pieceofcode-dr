@@ -42,6 +42,10 @@ class POCCodeExtractor {
 	 * @var int
 	 */
 	protected	$_revision;
+	/**
+	 * @var bool
+	 */
+	protected	$_showTitle;
 
 	public  function __construct() {
 		$this->_pocInstance = PieceOfCode::Instance();
@@ -55,9 +59,9 @@ class POCCodeExtractor {
 	 */
 	/**
 	 * @todo doc
-	 * @param unknown_type $input @todo doc
-	 * @param unknown_type $params @todo doc
-	 * @param unknown_type $parser @todo doc
+	 * @param string $input @todo doc
+	 * @param array $params @todo doc
+	 * @param Parser $parser @todo doc
 	 */
 	public function load($input, $params, $parser) {
 		$out = "";
@@ -67,16 +71,21 @@ class POCCodeExtractor {
 		$this->clear();
 
 		/*
-		 * Loading the configuration set between tags.
+		 * Loading configuration from tags.
 		 */
-		$this->loadVariables($input);
+		$out.= $this->loadParams($params);
+		if(!$this->getLastError()) {
+			$out.= $this->loadVariables($input);
+		}
 
 		/*
 		 * Loading file information
 		 */
-		$this->_fileInfo = $this->_storeCodes->getFile($this->_connection, $this->_filename, $this->_revision);
-		if(!$this->_fileInfo) {
-			die(__FILE__.":".__LINE__);
+		if(!$this->getLastError()) {
+			$this->_fileInfo = $this->_storeCodes->getFile($this->_connection, $this->_filename, $this->_revision);
+			if(!$this->_fileInfo) {
+				$out.=$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $this->_connection, $this->_filename, $this->_revision)));
+			}
 		}
 
 		return $out;
@@ -100,6 +109,11 @@ class POCCodeExtractor {
 
 			$upload_path = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$this->_fileInfo['upload_path'];
 
+			$out.= "<div class=\"PieceOfCode_code\">\n";
+			if($this->_showTitle) {
+				$out.="<span class=\"PieceOfCode_title\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</span>";
+			}
+
 			if(isset($this->_lines[0])) {
 				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"{$this->_lines[0]}\">";
 				$file = file($upload_path);
@@ -109,13 +123,14 @@ class POCCodeExtractor {
 					}
 				}
 				$auxOut.= "</{$tag}>";
-				$out.= "<div class=\"PieceOfCode_code\">".$wgParser->recursiveTagParse($auxOut)."</div>";
+				$out.= $wgParser->recursiveTagParse($auxOut);
 			} else {
 				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"1\">";
 				$auxOut.= file_get_contents($upload_path);
 				$auxOut.= "</{$tag}>";
-				$out.= "<div class=\"PieceOfCode_code\">".$wgParser->recursiveTagParse($auxOut)."</div>";
+				$out.= $wgParser->recursiveTagParse($auxOut);
 			}
+			$out.= "</div>\n";
 		}
 
 		return $out;
@@ -128,11 +143,13 @@ class POCCodeExtractor {
 	 * Clears all data concerning the file to be shown.
 	 */
 	protected function clear() {
+		$this->_showTitle = false;
+
 		$this->_filename   = '';
 		$this->_revision   = '';
 		$this->_connection = '';
 		$this->_lines      = array();
-		
+
 		$this->_fileInfo = null;
 	}
 	/**
@@ -171,13 +188,28 @@ class POCCodeExtractor {
 		return $out;
 	}
 	/**
+	 * @todo doc
+	 * @param array $params @todo doc
+	 */
+	protected function loadParams($params) {
+		$out = "";
+
+		if(isset($params['title'])) {
+			$this->_showTitle = (strtolower($params['title']) == 'true');
+		}
+
+		return $out;
+	}
+	/**
 	 * This method tries to load all the useful information set between tags
 	 * <pieceofcode> and </pieceofcode>.
-	 * @param $input Configuration text to be analyzed.
+	 * @param string $input Configuration text to be analyzed.
 	 */
 	protected function loadVariables($input) {
+		$out = "";
+
 		$this->_filename   = $this->getVariable($input, 'file');
-		$this->_revision   = $this->getVariable($input, 'revision');
+		$this->_revision   = $this->getVariable($input, 'revision', true);
 		$this->_connection = $this->getVariable($input, 'connection');
 		$this->_lines      = explode('-', $this->getVariable($input, 'lines'));
 
@@ -185,6 +217,8 @@ class POCCodeExtractor {
 			unset($this->_lines);
 			$this->_lines = array();
 		}
+
+		return $out;
 	}
 	/**
 	 * @todo doc

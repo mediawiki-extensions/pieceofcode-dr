@@ -20,7 +20,7 @@ class PieceOfCode extends SpecialPage {
 	 * Singleton instance holder.
 	 * @var PieceOfCode
 	 */
-	protected static	$_Instance   = null;
+	private static	$_Instance;
 	/**
 	 * Extension properties holder.
 	 * @var array
@@ -35,7 +35,7 @@ class PieceOfCode extends SpecialPage {
 						'sinfo-description'    => "PieceOfCode",
 						'sinfo-descriptionmsg' => 'poc-sinfo-pieceofcode-desc',
 						'author'               => array('Alejandro Darío Simi'),
-						'url'                  => 'http://wiki.daemonraco.com/wiki/pieceofcode-dr',
+						'url'                  => 'http://wiki.daemonraco.com/wiki/PieceOfCode-dr',
 						'svn-date'             => '$LastChangedDate$',
 						'svn-revision'         => '$LastChangedRevision$',
 	);
@@ -61,7 +61,10 @@ class PieceOfCode extends SpecialPage {
 	 * @var array
 	 */
 	protected	$_varDefaults = array(
-				'file'		=> '',		//!< 
+		'file'		=> '',		//!< 
+		'revision'	=> '',		//!<
+		'connection'	=> '',		//!<
+		'lines'		=> '',		//!<
 	);
 
 	protected function __construct() {
@@ -86,7 +89,12 @@ class PieceOfCode extends SpecialPage {
 		$this->_svnConnections = POCSVNConnections::Instance();
 		$this->_storedCodes    = POCStoredCodes::Instance();
 	}
-
+	/**
+	 * Prevent users to clone the instance.
+	 */
+	public function __clone() {
+		trigger_error('Clone is not allowed.', E_USER_ERROR);
+	}
 	/*
 	 * Public Methods.
 	 */
@@ -119,6 +127,7 @@ class PieceOfCode extends SpecialPage {
 			$fontcode['showit'] = ($fontcode['connection'] !== null && $fontcode['path'] !== null && $fontcode['revision'] !== null);
 
 			if($fontcode['showit']) {
+				$this->setLastError();
 				$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
 
 				if($fileInfo) {
@@ -130,14 +139,17 @@ class PieceOfCode extends SpecialPage {
 					} elseif(in_array('source', $tags)) {
 						$tag = 'source';
 					}
-						
-						
+
+
 					$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']}</h2>";
 					$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$fileInfo['lang']}\" line start=\"1\">";
 					$out.= file_get_contents($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path']);
 					$out.= "</{$tag}></div>";
 				} else {
-					die(__FILE__.':'.__LINE__);
+					if(!$this->getLastError()) {
+						$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision'])));
+					}
+					$out.=$this->getLastError();
 				}
 				$wgOut->addWikiText($out);
 				return;
@@ -190,7 +202,7 @@ class PieceOfCode extends SpecialPage {
 			$out.= "\t\t\t\t<td>{$svnconn['url']}</td>\n";
 			$out.= "\t\t\t</tr><tr>\n";
 			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-username')."</th>\n";
-			$out.= "\t\t\t\t<td>{$svnconn['username']}</td>\n";
+			$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."</td>\n";
 			$out.= "\t\t\t</tr><tr>\n";
 			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-password')."</th>\n";
 			$out.= "\t\t\t\t<td>".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."</td>\n";
@@ -241,7 +253,7 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t\t<li><strong>GoogleCode Issues Trak:</strong> http://code.google.com/p/pieceofcode-dr/issues</li>\n";
 		$out.= "\t\t</ul>\n";
 		/* @} */
-		
+
 		$wgOut->addWikiText($out);
 	}
 	/**
@@ -313,10 +325,12 @@ class PieceOfCode extends SpecialPage {
 	 * Public Class Methods.
 	 */
 	public static function Instance() {
-		if(!PieceOfCode::$_Instance) {
-			PieceOfCode::$_Instance = new PieceOfCode();
+		if (!isset(self::$_Instance)) {
+			$c = __CLASS__;
+			self::$_Instance = new $c;
 		}
-		return PieceOfCode::$_Instance;
+
+		return self::$_Instance;
 	}
 	public static function Property($name) {
 		$name = strtolower($name);
