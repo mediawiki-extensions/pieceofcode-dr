@@ -87,7 +87,7 @@ class POCStoredCodes {
 						$out = $this->selectFiles($connection, $filepath, $revision);
 					}
 				} else {
-					echo("<h4>".$this->getLastError()."</h4>"); //@todo ver por qué este mensage no llega a POC para ser impreso.
+					echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
 					if(!$this->getLastError()) {
 						$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-svn-file', $connection, $filepath, $revision)));
 					}
@@ -260,24 +260,28 @@ class POCStoredCodes {
 		if(!is_readable($filepath)) {
 			$command = $wgPieceOfCodeConfig['svn-binary']." ";
 			$command.= "cat ";
-			$command.= "'{$connInfo['url']}{$fileInfo['path']}' ";
+			$command.= "\"{$connInfo['url']}{$fileInfo['path']}\" ";
 			$command.= "-r{$fileInfo['revision']} ";
 			if(isset($connInfo['username'])) {
-				$command.= "--username '{$connInfo['username']}' ";
+				$command.= "--username {$connInfo['username']} ";
 			}
 			if(isset($connInfo['password'])) {
-				$command.= "--password '{$connInfo['password']}' ";
+				$command.= "--password {$connInfo['password']} ";
 			}
-			$command.= "> '{$filepath}'";
+			$command.= "> \"{$filepath}\"";
 			passthru($command, $error);
 
 			if(!$error && is_readable($filepath)) {
 				$out = true;
 			} elseif($error && is_readable($filepath)) {
 				unlink($filepath);
+			} elseif(is_readable($filepath)) {
+				$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-svn-no-file', $filepath)));
+				echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
 			}
 		} else {
 			$this->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-svn-file-exist', $filepath)));
+			echo("<h4>".$this->getLastError()."</h4>"); //@fixme ver por qué este mensage no llega a POC para ser impreso.
 		}
 
 		return $out;
