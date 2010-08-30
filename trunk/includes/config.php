@@ -60,10 +60,17 @@ $wgPieceOfCodeConfig['db-tablename']	= 'poc_codes';
  */
 $wgPieceOfCodeConfig['fontcodes']		= array();
 $wgPieceOfCodeConfig['fontcodes']['bash']	= array('sh', 'mk', 'mak');
-$wgPieceOfCodeConfig['fontcodes']['cpp']	= array('C', 'c', 'cpp', 'H', 'h', 'hpp');
-$wgPieceOfCodeConfig['fontcodes']['php']	= array('inc', 'php3', 'php');
-$wgPieceOfCodeConfig['fontcodes']['text']	= array('txt');
-$wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z', 'gz');
+$wgPieceOfCodeConfig['fontcodes']['cpp']	= array('cpp', 'h', 'hpp', 'c');
+$wgPieceOfCodeConfig['fontcodes']['php']	= array('php', 'inc', 'php3');
+$wgPieceOfCodeConfig['fontcodes']['text']	= array('txt', 'log');
+$wgPieceOfCodeConfig['fontcodes']['sql']	= array('sql');
+$wgPieceOfCodeConfig['fontcodes']['xml']	= array('xml', 'xsl', 'xslt', 'mxml');
+$wgPieceOfCodeConfig['fontcodes']['java']	= array('java');
+$wgPieceOfCodeConfig['fontcodes']['dos']	= array('bat');
+$wgPieceOfCodeConfig['fontcodes']['asm']	= array('asm');
+$wgPieceOfCodeConfig['fontcodes']['html4strict']= array('html', 'htm');
+$wgPieceOfCodeConfig['fontcodes']['python']	= array('py');
+$wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z', 'gz', 'jar', 'class', 'a', 'o', 'tar', 'bz2');
 $wgPieceOfCodeConfig['fontcodes-allowempty']	= false;
 /** 	@} */
 /** @} */

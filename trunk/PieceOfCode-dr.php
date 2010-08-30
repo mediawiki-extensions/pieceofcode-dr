@@ -11,11 +11,15 @@
  * @author Alejandro Darío Simi
  * @date 2010-08-28
  */
-require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'config.php');
-require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCSVNConnections.php');
-require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCStoredCodes.php');
-require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCCodeExtractor.php');
-require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php');
+$wgPieceOfCodeExtensionSysDir = dirname(__FILE__);
+$wgPieceOfCodeExtensionWebDir = $wgScriptPath.'/extensions/'.basename(dirname(__FILE__));
+
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'config.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCErrorsHolder.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCSVNConnections.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCStoredCodes.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCCodeExtractor.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php');
 
 /**
  * Register function.
@@ -28,8 +32,9 @@ function PieceOfCode_HeadHooker(&$out, &$sk) {
 
 	if($wgPieceOfCodeConfig['autocss']) {
 		global	$wgScriptPath;
+		global	$wgPieceOfCodeExtensionWebDir;
 
-		$script = $wgScriptPath.'/extensions/'.basename(dirname(__FILE__)).'/includes/style.css';
+		$script = $wgPieceOfCodeExtensionWebDir.'/includes/style.css';
 		$out->addScript('<link type="text/css" rel="stylesheet" href="'.$script.'"/>');
 	}
 
