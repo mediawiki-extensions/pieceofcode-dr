@@ -70,7 +70,10 @@ $wgPieceOfCodeConfig['fontcodes']['dos']	= array('bat');
 $wgPieceOfCodeConfig['fontcodes']['asm']	= array('asm');
 $wgPieceOfCodeConfig['fontcodes']['html4strict']= array('html', 'htm');
 $wgPieceOfCodeConfig['fontcodes']['python']	= array('py');
-$wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z', 'gz', 'jar', 'class', 'a', 'o', 'tar', 'bz2');
+$wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z',
+							'gz', 'jar', 'class', 'a', 'o',
+							'tar', 'bz2', 'jpg', 'jpeg', 'png',
+							'gif', 'xcf', 'svg');
 $wgPieceOfCodeConfig['fontcodes-allowempty']	= false;
 /** 	@} */
 /**

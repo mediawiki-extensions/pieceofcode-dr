@@ -1,15 +1,14 @@
 Installation:
-        If you want to install this extension, follow these spteps:
+        If you want to install this extension, follow these steps:
                 * First, download the extension from http://code.google.com/p/pieceofcode-dr/downloads/list. This will give you a tar.gz file.
                 * Second, extract the tar.gz file inside you mediawiki extensions directory. This will create a folder called PieceOfCode-dr.
-                * Third, add this line at the end of you LocalSettings.php file:
+                * Third, add these lines at the end of you LocalSettings.php file:
                         require_once("extensions/PieceOfCode-dr/PieceOfCode-dr.php");
-		  And a configuration like this one:
-			$wgPieceOfCodeSVNConnections['MyProyect'] = array(
-				'url'		=> 'https://myproyect.googlecode.com',
-				'username'	=> 'myusername',
-				'password'	=> 'mypassword',
-			);
+			//$wgPieceOfCodeSVNConnections['MyProyect'] = array(
+			//	'url'		=> 'https://myproyect.googlecode.com',
+			//	'username'	=> 'myusername',
+			//	'password'	=> 'mypassword',
+			//);
 
                 * Then, enjoy!.
 
