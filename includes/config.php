@@ -73,5 +73,19 @@ $wgPieceOfCodeConfig['fontcodes']['python']	= array('py');
 $wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z', 'gz', 'jar', 'class', 'a', 'o', 'tar', 'bz2');
 $wgPieceOfCodeConfig['fontcodes-allowempty']	= false;
 /** 	@} */
+/**
+ * @todo doc.
+ * 	@{
+ */
+$wgPieceOfCodeConfig['showinstalldir']		= true;
+/** 	@} */
+/**
+ * Others.
+ * 	@{
+ */
+$wgPieceOfCodeConfig['maxsize']			= array();
+$wgPieceOfCodeConfig['maxsize']['highlighting']	= 30720;	// 30KB
+$wgPieceOfCodeConfig['maxsize']['showing']	= 51200;	// 50KB
+/** 	@} */
 /** @} */
 ?>

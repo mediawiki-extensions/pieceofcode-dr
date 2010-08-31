@@ -24,8 +24,8 @@ class POCErrorsHolder {
 	 */
 	protected	$ERROR_PREFIX = "DR_PieceOfCode Error: ";
 	/**
-	* @var string
-	*/
+	 * @var string
+	 */
 	protected	$_lastError;
 
 	protected function __construct() {
@@ -37,7 +37,7 @@ class POCErrorsHolder {
 	public function __clone() {
 		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
-	
+
 	/*
 	 * Public methods.
 	 */
@@ -56,14 +56,16 @@ class POCErrorsHolder {
 		return "<span style=\"color:red;font-weight:bold;\">".$this->ERROR_PREFIX."$message</span>";
 	}
 	/**
-	 * @todo doc
+	 * Gets last error message.
+	 * @return Returns the message.
 	 */
 	public function getLastError() {
 		return $this->_lastError;
 	}
 	/**
-	 * @todo doc
-	 * @param string $msg @todo doc
+	 * Sets last error message.
+	 * @param string $msg Message to set.
+	 * @return Returns the message set.
 	 */
 	public function setLastError($message="", $autoFormat=true) {
 		$this->_lastError = ($autoFormat ? $this->formatErrorMessage($message) : $message);
