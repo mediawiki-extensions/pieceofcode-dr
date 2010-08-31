@@ -80,17 +80,17 @@ class POCCodeExtractor {
 		 * Loading configuration from tags.
 		 */
 		$out.= $this->loadParams($params);
-		if(!$this->_errors->getLastError()) {
+		if($this->_errors->ok()) {
 			$out.= $this->loadVariables($input);
 		}
 
 		/*
 		 * Loading file information
 		 */
-		if(!$this->_errors->getLastError()) {
+		if($this->_errors->ok()) {
 			$this->_fileInfo = $this->_storeCodes->getFile($this->_connection, $this->_filename, $this->_revision);
 			if(!$this->_fileInfo) {
-				$out.=$this->_errors->setLastError($this->formatErrorMessage(wfMsg('poc-errmsg-no-fileinfo', $this->_connection, $this->_filename, $this->_revision)));
+				$out.=$this->_errors->setLastError(wfMsg('poc-errmsg-no-fileinfo', $this->_connection, $this->_filename, $this->_revision));
 			}
 		}
 
@@ -117,7 +117,7 @@ class POCCodeExtractor {
 
 			$out.= "<div class=\"PieceOfCode_code\">\n";
 			if($this->_showTitle) {
-				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("connection={$this->_connection}&path={$this->_filename}&revision={$this->_revision}");
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$this->_connection}&path={$this->_filename}&revision={$this->_revision}");
 				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a></span>";
 			}
 

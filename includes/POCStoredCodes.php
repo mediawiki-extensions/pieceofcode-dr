@@ -53,8 +53,23 @@ class POCStoredCodes {
 	 */
 	/**
 	 * @todo doc
-	 * @param unknown_type $connection @todo doc
-	 * @param unknown_type $filepath @todo doc
+	 * @param string $code @todo doc
+	 */
+	public function getByCode($code) {
+		$out = false;
+
+		global	$wgPieceOfCodeConfig;
+
+		$this->_errors->clearError();
+		$out = $this->selectByCode($code);
+			
+		return $out;
+	}
+	/**
+	 * @todo doc
+	 * @param string $connection @todo doc
+	 * @param string $filepath @todo doc
+	 * @param int $revision @todo doc
 	 */
 	public function getFile($connection, $filepath, $revision) {
 		$out = false;
@@ -65,8 +80,8 @@ class POCStoredCodes {
 
 			$this->_errors->clearError();
 			$fileInfo = $this->selectFiles($connection, $filepath, $revision);
-				
-			if(!$fileInfo && !$this->_errors->getLastError()) {
+
+			if(!$fileInfo && $this->_errors->ok()) {
 				global	$wgUser;
 				global	$wgPieceOfCodeConfig;
 
@@ -88,14 +103,14 @@ class POCStoredCodes {
 						'user'		=> $wgUser->getName(),
 					);
 
-					if(!$this->_errors->getLastError() && $this->getSVNFile($conn, $auxFileInfo)) {
+					if($this->_errors->ok() && $this->getSVNFile($conn, $auxFileInfo)) {
 						$this->insertFile($auxFileInfo);
 
-						if(!$this->_errors->getLastError()) {
+						if($this->_errors->ok()) {
 							$out = $this->selectFiles($connection, $filepath, $revision);
 						}
 					} else {
-						if(!$this->_errors->getLastError()) {
+						if($this->_errors->ok()) {
 							$this->_errors->setLastError(wfMsg('poc-errmsg-no-svn-file', $connection, $filepath, $revision));
 						}
 					}
@@ -119,8 +134,69 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param unknown_type $connection @todo doc
-	 * @param unknown_type $filepath @todo doc
+	 * @param string $code @todo doc
+	 */
+	public function removeByCode($code) {
+		$out = false;
+
+		global	$wgPieceOfCodeConfig;
+
+		$this->_errors->clearError();
+		$fileInfo = $this->selectByCode($code);
+		if($this->_errors->ok()) {
+			global	$wgPieceOfCodeConfig;
+			$upload_path = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path'];
+			unlink($upload_path);
+			if(!is_readable($upload_path)) {
+				$this->deleteByCode($code);
+				$out = $this->_errors->ok();
+			} else {
+				$this->_errors->setLastError(wfMsg('poc-errmsg-remove-file', $upload_path));
+			}
+		}
+			
+		return $out;
+	}
+	/**
+	 * @todo doc
+	 * @param string $code @todo doc
+	 */
+	public function selectByCode($code) {
+		$out = null;
+
+		if($this->_dbtype == 'mysql') {
+			global	$wgDBprefix;
+			global	$wgPieceOfCodeConfig;
+
+			$dbr = &wfGetDB(DB_SLAVE);
+			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
+			"cod_code = '{$code}'");
+			if($row = $dbr->fetchRow($res)) {
+				$out = array(
+					'id'		=> $row[0],
+					'connection'	=> $row[1],
+					'code'		=> $row[2],
+					'path'		=> $row[3],
+					'lang'		=> $row[4],
+					'revision'	=> $row[5],
+					'upload_path'	=> $row[6],
+					'user'		=> $row[7],
+					'timestamp'	=> $row[8]
+				);
+			} else {
+				$this->_errors->setLastError(wfMsg('poc-errmsg-query-no-result'));
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
+
+		return $out;
+	}
+	/**
+	 * @todo doc
+	 * @param string $connection @todo doc
+	 * @param string $filepath @todo doc
+	 * @param stirng $revision @todo doc
 	 */
 	public function selectFiles($connection=false, $filepath=false, $revision=false) {
 		$out = null;
@@ -234,13 +310,13 @@ class POCStoredCodes {
 			if(!$out && in_array($ext, $wgPieceOfCodeConfig['fontcodes-forbidden'])) {
 				$this->_errors->setLastError(wfMsg('poc-errmsg-forbidden-tcode', $pieces[count($pieces)-1]));
 			} elseif(!$out) {
-					$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-tcode', $pieces[count($pieces)-1]));
+				$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-tcode', $pieces[count($pieces)-1]));
 				$out = 'text';
 			}
 		} elseif($wgPieceOfCodeConfig['fontcodes-allowempty']) {
 			$out = 'text';
 		} else {
-				$this->_errors->setLastError(wfMsg('poc-errmsg-empty-tcode'));
+			$this->_errors->setLastError(wfMsg('poc-errmsg-empty-tcode'));
 		}
 
 		return $out;
@@ -292,7 +368,7 @@ class POCStoredCodes {
 			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
 
-			if(!$this->_errors->getLastError()) {
+			if($this->_errors->ok()) {
 				$dbr = &wfGetDB(DB_SLAVE);
 				$res = $dbr->insert($wgPieceOfCodeConfig['db-tablename'],
 				array(	'cod_connection'	=> $fileInfo['connection'],
@@ -314,6 +390,28 @@ class POCStoredCodes {
 		}
 
 		return	$out;
+	}
+	/**
+	 * @todo doc
+	 * @param string $code @todo doc
+	 */
+	protected function deleteByCode($code) {
+		$out = null;
+
+		if($this->_dbtype == 'mysql') {
+			global	$wgDBprefix;
+			global	$wgPieceOfCodeConfig;
+
+			$dbr = &wfGetDB(DB_SLAVE);
+			$res = $dbr->delete($wgPieceOfCodeConfig['db-tablename'], array('cod_code' => $code));
+			if($res !== true) {
+				$this->_errors->setLastError(wfMsg('poc-errmsg-query-no-delete'));
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
+
+		return $out;
 	}
 
 	/*

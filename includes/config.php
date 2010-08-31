@@ -28,7 +28,7 @@ if(!isset($wgPieceOfCodeConfig) || !is_array($wgPieceOfCodeConfig)) {
 }
 /**
  * Allows to enable/disable internal CSS-file inclution.
- * @var bool
+ * @var boolean
  */
 $wgPieceOfCodeConfig['autocss']	= true;
 /**
@@ -70,6 +70,8 @@ $wgPieceOfCodeConfig['fontcodes']['dos']	= array('bat');
 $wgPieceOfCodeConfig['fontcodes']['asm']	= array('asm');
 $wgPieceOfCodeConfig['fontcodes']['html4strict']= array('html', 'htm');
 $wgPieceOfCodeConfig['fontcodes']['python']	= array('py');
+$wgPieceOfCodeConfig['fontcodes']['css']	= array('css');
+$wgPieceOfCodeConfig['fontcodes']['javascript']	= array('js');
 $wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '7z',
 							'gz', 'jar', 'class', 'a', 'o',
 							'tar', 'bz2', 'jpg', 'jpeg', 'png',

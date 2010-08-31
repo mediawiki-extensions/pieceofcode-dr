@@ -124,21 +124,26 @@ class PieceOfCode extends SpecialPage {
 		 */
 		$param    = $wgRequest->getText('param');
 
-		if($wgEnableUploads) {
-			$fontcode = array(
-				'connection'	=> $wgRequest->getVal('connection', null),
-				'path'		=> $wgRequest->getVal('path', null),
-				'revision'	=> $wgRequest->getVal('revision', null),
-			);
-			$fontcode['showit'] = ($fontcode['connection'] !== null && $fontcode['path'] !== null && $fontcode['revision'] !== null);
+		$fontcode = array(
+			'action'	=> $wgRequest->getVal('action', null),
+			'code'		=> $wgRequest->getVal('code', null),
+			'connection'	=> $wgRequest->getVal('connection', null),
+			'path'		=> $wgRequest->getVal('path', null),
+			'revision'	=> $wgRequest->getVal('revision', null),
+		);
+		$fontcode['showit'] = ($fontcode['connection'] !== null && $fontcode['path'] !== null && $fontcode['revision'] !== null);
 
-			if($fontcode['showit']) {
-				$this->showFontCode($fontcode);
-			} else {
+		switch($fontcode['action']) {
+			case 'delete':
+				$this->deleteFontCode(&$fontcode);
+				break;
+			case 'show':
+				if($wgEnableUploads && $fontcode['showit']) {
+					$this->showFontCode($fontcode);
+					break;
+				}
+			default:
 				$this->basicInformation();
-			}
-		} else {
-			$this->basicInformation();
 		}
 	}
 	/**
@@ -157,7 +162,7 @@ class PieceOfCode extends SpecialPage {
 
 		$this->_errors->clearError();
 		$out.= $codeExtractor->load($input, $params, $parser);
-		if(!$this->_errors->getLastError()) {
+		if($this->_errors->ok()) {
 			$out.= $codeExtractor->show();
 		}
 
@@ -179,10 +184,13 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected function basicInformation() {
 		global	$wgOut;
+		global	$wgUser;
 		global	$wgPieceOfCodeSVNConnections;
 		global	$wgPieceOfCodeConfig;
 		global	$wgPieceOfCodeExtensionSysDir;
 		global	$wgPieceOfCodeExtensionWebDir;
+
+		$isAdmin = in_array('sysop', $wgUser->getGroups());
 
 		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>";
 		$i = 0;
@@ -262,6 +270,9 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-user')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-date')."</th>\n";
 		$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></th>\n";
+		if($isAdmin) {
+			$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-16px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></th>\n";
+		}
 		$out.= "\t\t\t</tr>\n";
 		$files = POCStoredCodes::Instance()->selectFiles();
 		foreach($files as $fileInfo) {
@@ -274,8 +285,12 @@ class PieceOfCode extends SpecialPage {
 			$auxUrl = Title::makeTitle(NS_USER,$fileInfo['user'])->escapeFullURL();
 			$out.= "\t\t\t\t<td><a href=\"{$auxUrl}\">{$fileInfo['user']}</a></td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['timestamp']}</td>\n";
-			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
-			$out.= "\t\t\t\t<th class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></th>\n";
+			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
+			$out.= "\t\t\t\t<td class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></td>\n";
+			if($isAdmin) {
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=delete&code={$fileInfo['code']}");
+				$out.= "\t\t\t\t<td class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-16px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></a></td>\n";
+			}
 			$out.= "\t\t\t</tr>\n";
 		}
 		$out.= "\t\t</table>\n";
@@ -293,6 +308,56 @@ class PieceOfCode extends SpecialPage {
 		/* @} */
 
 		$wgOut->addHTML($out);
+	}
+	protected function deleteFontCode(&$fontcode) {
+		global	$wgOut;
+		global	$wgUser;
+		global	$wgPieceOfCodeSVNConnections;
+		global	$wgPieceOfCodeConfig;
+		global	$wgPieceOfCodeExtensionSysDir;
+		global	$wgPieceOfCodeExtensionWebDir;
+
+		$isAdmin = in_array('sysop', $wgUser->getGroups());
+		if($isAdmin) {
+			$out = "";
+
+			global	$wgRequest;
+
+			if($wgRequest->wasPosted()) {
+				$returnUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL();
+
+				POCStoredCodes::Instance()->removeByCode($fontcode['code']);
+				if(!$this->_errors->ok()) {
+					$out.= $this->_errors->getLastError()."<br/>";
+				}
+
+				$out.= "\t\t\t\t<input type=\"button\" value=\"".wfMsg('poc-back')."\" onClick=\"document.location.href='{$returnUrl}';return false\"/>\n";
+			} else {
+				$sendUrl   = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action={$fontcode['action']}&code={$fontcode['code']}");
+				$cancelUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL();
+
+				$fileInfo = POCStoredCodes::Instance()->getByCode($fontcode['code']);
+
+				if($this->_errors->ok()) {
+					$out.="\t\t<form action=\"{$sendUrl}\" method=\"post\">\n";
+					$out.="\t\t\t<input type=\"hidden\" name=\"action\" value=\"{$fontcode['action']}\"/>\n";
+					$out.="\t\t\t<input type=\"hidden\" name=\"code\"   value=\"{$fontcode['code']}\"/>\n";
+					$out.="\t\t\t<p>\n";
+					$out.="\t\t\t\t".wfMsg('poc-sinfo-about-to-delete', $fileInfo['connection'], $fileInfo['path'], $fileInfo['revision'], $fileInfo['lang'])."\n";
+					$out.="\t\t\t</p>\n";
+					$out.="\t\t\t<p>\n";
+					$out.="\t\t\t\t<input type=\"submit\" value=\"".wfMsg('poc-yes')."\"/>\n";
+					$out.="\t\t\t\t<input type=\"reset\" value=\"".wfMsg('poc-no')."\" onClick=\"document.location.href='{$cancelUrl}';return false\"/>\n";
+					$out.="\t\t\t</p>\n";
+					$out.="\t\t</form>\n";
+				} else {
+					$wgOut->addHTML($this->_errors->getLastError());
+				}
+			}
+			$wgOut->addHTML($out);
+		} else {
+			$wgOut->addHTML($this->_errors->setLastError(wfMsg('poc-errmsg-only-admin')));
+		}
 	}
 	/**
 	 * @todo doc
@@ -336,7 +401,7 @@ class PieceOfCode extends SpecialPage {
 			$out.= file_get_contents($filepath, false, null, -1, $wgPieceOfCodeConfig['maxsize']['showing']);
 			$out.= "</{$tag}></div>";
 		} else {
-			if(!$this->_errors->getLastError()) {
+			if($this->_errors->ok()) {
 				$this->_errors->setLastError(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision']));
 			}
 			$out.=$this->_errors->getLastError();
