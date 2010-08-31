@@ -24,12 +24,16 @@ class POCErrorsHolder {
 	 */
 	protected	$ERROR_PREFIX = "DR_PieceOfCode Error: ";
 	/**
+	 * @var boolean
+	 */
+	protected	$_ok;
+	/**
 	 * @var string
 	 */
 	protected	$_lastError;
 
 	protected function __construct() {
-		$this->_lastError = "";
+		$this->clearError();
 	}
 	/**
 	 * Prevent users to clone the instance.
@@ -46,7 +50,9 @@ class POCErrorsHolder {
 	 * @param string $msg @todo doc
 	 */
 	public function clearError() {
-		return $this->setLastError("", false);
+		$this->_lastError = "";
+		$this->_ok        = true;
+		return $this->getLastError();
 	}
 	/**
 	 * @todo doc
@@ -63,13 +69,19 @@ class POCErrorsHolder {
 		return $this->_lastError;
 	}
 	/**
+	 * @todo doc
+	 */
+	public function ok() {
+		return $this->_ok;
+	}
+		/**
 	 * Sets last error message.
 	 * @param string $msg Message to set.
 	 * @return Returns the message set.
 	 */
 	public function setLastError($message="", $autoFormat=true) {
 		$this->_lastError = ($autoFormat ? $this->formatErrorMessage($message) : $message);
-
+		$this->_ok        = false;
 		return $this->getLastError();
 	}
 
