@@ -132,10 +132,25 @@ class POCCodeExtractor {
 				$auxOut.= "</{$tag}>";
 				$out.= $wgParser->recursiveTagParse($auxOut);
 			} else {
-				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"1\">";
-				$auxOut.= file_get_contents($upload_path);
-				$auxOut.= "</{$tag}>";
-				$out.= $wgParser->recursiveTagParse($auxOut);
+				$st = stat($upload_path);
+					
+				if($st['size'] > $wgPieceOfCodeConfig['maxsize']['showing']) {
+					$out.= $this->_errors->setLastError(wfMsg('poc-errmsg-large-showall', $wgPieceOfCodeConfig['maxsize']['showing']));
+					$out.= "<pre>";
+					$out.= htmlentities(file_get_contents($upload_path));
+					$out.= "</pre>";
+				} else {
+					$lang = $this->_fileInfo['lang'];
+
+					if($st['size'] > $wgPieceOfCodeConfig['maxsize']['highlighting']) {
+						$out .= $this->_errors->setLastError(wfMsg('poc-errmsg-large-highlight', $wgPieceOfCodeConfig['maxsize']['highlighting']));
+						$lang = "text";
+					}
+					$auxOut = "<{$tag} lang=\"{$lang}\" line start=\"1\">";
+					$auxOut.= file_get_contents($upload_path);
+					$auxOut.= "</{$tag}>";
+					$out.= $wgParser->recursiveTagParse($auxOut);
+				}
 			}
 			$out.= "</div>\n";
 		}

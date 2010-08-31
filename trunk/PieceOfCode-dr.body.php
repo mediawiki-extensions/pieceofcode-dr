@@ -133,40 +133,72 @@ class PieceOfCode extends SpecialPage {
 			$fontcode['showit'] = ($fontcode['connection'] !== null && $fontcode['path'] !== null && $fontcode['revision'] !== null);
 
 			if($fontcode['showit']) {
-				$this->_errors->clearError();
-				$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
-
-				if($fileInfo) {
-					global	$wgParser;
-					$tags = $wgParser->getTags();
-
-					if(in_array('syntaxhighlight', $tags)) {
-						$tag = 'syntaxhighlight';
-					} elseif(in_array('source', $tags)) {
-						$tag = 'source';
-					}
-
-
-					$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']}</h2>";
-					$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$fileInfo['lang']}\" line start=\"1\">";
-					$out.= file_get_contents($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path']);
-					$out.= "</{$tag}></div>";
-				} else {
-					if(!$this->_errors->getLastError()) {
-						$this->_errors->setLastError(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision']));
-					}
-					$out.=$this->_errors->getLastError();
-				}
-				$wgOut->addWikiText($out);
-				return;
+				$this->showFontCode($fontcode);
+			} else {
+				$this->basicInformation();
 			}
+		} else {
+			$this->basicInformation();
 		}
+	}
+	/**
+	 * @todo doc
+	 * @param string $input @todo doc
+	 * @param array $params @todo doc
+	 * @param Parser $parser @todo doc
+	 */
+	public function parse($input, $params, $parser) {
 		/*
-		* Section: Extension information.
-		* @{
-		*/
-		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>\n";
-		$out.= "\t\t<h2>".wfMsg('poc-sinfo-extension-information')."</h2>\n";
+		 * This variable will hold the content to be retorned. Eighter
+		 * some formatted XML text or an error message.
+		 */
+		$out = "";
+		$codeExtractor = new POCCodeExtractor();
+
+		$this->_errors->clearError();
+		$out.= $codeExtractor->load($input, $params, $parser);
+		if(!$this->_errors->getLastError()) {
+			$out.= $codeExtractor->show();
+		}
+
+		return $out;
+	}
+	/**
+	 * @todo doc
+	 * @param unknown_type $name @todo doc
+	 */
+	public function varDefault($name) {
+		return (isset($this->_varDefaults[$name])?$this->_varDefaults[$name]:'');
+	}
+
+	/*
+	 * Protected Methods.
+	 */
+	/**
+	 * Prints basic information on Special:PieceOfCode
+	 */
+	protected function basicInformation() {
+		global	$wgOut;
+		global	$wgPieceOfCodeSVNConnections;
+		global	$wgPieceOfCodeConfig;
+		global	$wgPieceOfCodeExtensionSysDir;
+		global	$wgPieceOfCodeExtensionWebDir;
+
+		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>";
+		$i = 0;
+		$out.= "\t\t<table id=\"toc\" class=\"toc\" summary=\"Contents\"><tbody><tr><td><div id=\"toctitle\"><h2>Contents</h2> <span class=\"toctoggle\">[<a id=\"togglelink\" class=\"internal\" href=\"javascript:toggleToc()\">hide</a>]</span></div>\n";
+		$out.= "\t\t\t<ul>\n";
+		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-extension-information\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-extension-information')."</span></a></li>\n";
+		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-svn-connections\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-svn-connections')."</span></a></li>\n";
+		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-stored-codes\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-stored-codes')."</span></a></li>\n";
+		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-links\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-links')."</span></a></li>\n";
+		$out.= "\t\t\t</ul>\n";
+		$out.= "\t\t</td></tr></tbody></table>\n";
+		/*
+		 * Section: Extension information.
+		 * @{
+		 */
+		$out.= "\t\t<a name=\"poc-sinfo-extension-information\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-extension-information')."</span></h2>\n";
 		$out.= "\t\t<ul>\n";
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-name').":</strong> ".PieceOfCode::Property('name')."</li>\n";
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-version').":</strong> ".PieceOfCode::Property('version')."</li>\n";
@@ -177,7 +209,7 @@ class PieceOfCode extends SpecialPage {
 		}
 		$out.= "\t\t\t</ul></li>\n";
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-url').":</strong> ".PieceOfCode::Property('url')."</li>\n";
-		if($wgXML2WikiConfig['showinstalldir']) {
+		if($wgPieceOfCodeConfig['showinstalldir']) {
 			$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-installation-directory').":</strong> ".dirname(__FILE__)."</li>\n";
 		}
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-svn').":</strong><ul>\n";
@@ -191,10 +223,10 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</ul>\n";
 		/* @} */
 		/*
-		* Section: SVN Connections.
-		* @{
-		*/
-		$out.= "\t\t<h2>".wfMsg('poc-sinfo-svn-connections')."</h2>\n";
+		 * Section: SVN Connections.
+		 * @{
+		 */
+		$out.= "\t\t<a name=\"poc-sinfo-svn-connections\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-svn-connections')."</span></h2>\n";
 		$out.= "\t\t<table class=\"wikitable\">\n";
 		$out.= "\t\t\t<tr>\n";
 		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-svn-connections')."</th>\n";
@@ -216,10 +248,10 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</table>\n";
 		/* @} */
 		/*
-		* Section: Stored Codes.
-		* @{
-		*/
-		$out.= "\t\t<h2>".wfMsg('poc-sinfo-stored-codes')."</h2>\n";
+		 * Section: Stored Codes.
+		 * @{
+		 */
+		$out.= "\t\t<a name=\"poc-sinfo-stored-codes\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-stored-codes')."</span></h2>\n";
 		$out.= "\t\t<table class=\"wikitable sortable\">\n";
 		$out.= "\t\t\t<tr>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-conn')."</th>\n";
@@ -249,10 +281,10 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</table>\n";
 		/* @} */
 		/*
-		* Section: Links
-		* @{
-		*/
-		$out.= "\t\t<h2>".wfMsg('poc-sinfo-links')."</h2>\n";
+		 * Section: Links
+		 * @{
+		 */
+		$out.= "\t\t<a name=\"poc-sinfo-links\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-links')."</span></h2>\n";
 		$out.= "\t\t<ul>\n";
 		$out.= "\t\t\t<li><strong>MediaWiki Extensions:</strong> http://www.mediawiki.org/wiki/Extension:PieceOfCode</li>\n";
 		$out.= "\t\t\t<li><strong>GoogleCode Proyect Site:</strong> http://code.google.com/p/pieceofcode-dr/</li>\n";
@@ -264,68 +296,53 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param string $message @todo doc
+	 * @param array $fontcode @todo doc
 	 */
-	public function formatErrorMessage($message) {
-		return "<span style=\"color:red;font-weight:bold;\">".$this->ERROR_PREFIX."$message</span>";
-	}
-	/**
-	 * Gets last error message.
-	 * @return Returns the message.
-	 */
-	public function getLastError() {
-		return $this->_lastError;
-	}
-	/**
-	 * @todo doc
-	 * @param string $input @todo doc
-	 * @param array $params @todo doc
-	 * @param Parser $parser @todo doc
-	 */
-	public function parse($input, $params, $parser) {
-		/*
-		 * This variable will hold the content to be retorned. Eighter
-		 * some formatted XML text or an error message.
-		 */
+	protected function showFontCode(&$fontcode) {
 		$out = "";
-		$codeExtractor = new POCCodeExtractor();
+
+		global	$wgOut;
+		global	$wgPieceOfCodeSVNConnections;
+		global	$wgPieceOfCodeConfig;
+		global	$wgPieceOfCodeExtensionSysDir;
+		global	$wgPieceOfCodeExtensionWebDir;
 
 		$this->_errors->clearError();
-		$out.= $codeExtractor->load($input, $params, $parser);
-		if(!$this->_errors->getLastError()) {
-			$out.= $codeExtractor->show();
+		$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
+
+		if($fileInfo) {
+			global	$wgParser;
+			$tags = $wgParser->getTags();
+
+			if(in_array('syntaxhighlight', $tags)) {
+				$tag = 'syntaxhighlight';
+			} elseif(in_array('source', $tags)) {
+				$tag = 'source';
+			}
+
+			$filepath = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path'];
+			$st       = stat($filepath);
+			$lang     = $fileInfo['lang'];
+			if($st['size'] > $wgPieceOfCodeConfig['maxsize']['highlighting']) {
+				$out .= $this->_errors->setLastError(wfMsg('poc-errmsg-large-highlight', $wgPieceOfCodeConfig['maxsize']['highlighting']));
+				$lang = "text";
+			}
+			if($st['size'] > $wgPieceOfCodeConfig['maxsize']['showing']) {
+				$out .= "<br/>".$this->_errors->setLastError(wfMsg('poc-errmsg-large-show', $wgPieceOfCodeConfig['maxsize']['showing']));
+				$lang = "text";
+			}
+			$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']}</h2>";
+			$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$lang}\" line start=\"1\">";
+			$out.= file_get_contents($filepath, false, null, -1, $wgPieceOfCodeConfig['maxsize']['showing']);
+			$out.= "</{$tag}></div>";
+		} else {
+			if(!$this->_errors->getLastError()) {
+				$this->_errors->setLastError(wfMsg('poc-errmsg-no-fileinfo', $fontcode['connection'], $fontcode['path'], $fontcode['revision']));
+			}
+			$out.=$this->_errors->getLastError();
 		}
-		//$out.= '<pre>';
-		//ob_start();
-		//var_dump($input);
-		//$out.=ob_get_contents();
-		//ob_end_clean();
-		//$out.= '</pre>';
-		//
-		//$out.= "<pre>$input</pre>";
-
-		return $out;
+		$wgOut->addWikiText($out);
 	}
-	/**
-	 * Sets last error message.
-	 * @param string $msg Message to set.
-	 * @return Returns the message set.
-	 */
-	public function setLastError($msg="") {
-		$this->_lastError = $msg;
-		return $this->_errors->getLastError();
-	}
-	/**
-	 * @todo doc
-	 * @param unknown_type $name @todo doc
-	 */
-	public function varDefault($name) {
-		return (isset($this->_varDefaults[$name])?$this->_varDefaults[$name]:'');
-	}
-
-	/*
-	 * Protected Methods.
-	 */
 
 	/*
 	 * Public Class Methods.
