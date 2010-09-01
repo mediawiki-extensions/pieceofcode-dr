@@ -194,11 +194,12 @@ class PieceOfCode extends SpecialPage {
 
 		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>";
 		$i = 0;
-		$out.= "\t\t<table id=\"toc\" class=\"toc\" summary=\"Contents\"><tbody><tr><td><div id=\"toctitle\"><h2>Contents</h2> <span class=\"toctoggle\">[<a id=\"togglelink\" class=\"internal\" href=\"javascript:toggleToc()\">hide</a>]</span></div>\n";
+		$out.= "\t\t<table id=\"toc\" class=\"toc\" summary=\"Contents\"><tbody><tr><td><div id=\"toctitle\"><h2>Contents</h2></div>\n";
 		$out.= "\t\t\t<ul>\n";
 		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-extension-information\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-extension-information')."</span></a></li>\n";
 		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-svn-connections\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-svn-connections')."</span></a></li>\n";
 		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-stored-codes\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-stored-codes')."</span></a></li>\n";
+		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-configuration\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-configuration')."</span></a></li>\n";
 		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-links\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-links')."</span></a></li>\n";
 		$out.= "\t\t\t</ul>\n";
 		$out.= "\t\t</td></tr></tbody></table>\n";
@@ -296,6 +297,43 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t</table>\n";
 		/* @} */
 		/*
+		 * Section: Configuration.
+		 * @{
+		 */
+		$out.= "\t\t<a name=\"poc-sinfo-configuration\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-configuration')."</span></h2>\n";
+		$out.= "\t\t<table class=\"wikitable\">\n";
+		$out.= "\t\t\t<tr>\n";
+		$out.= "\t\t\t\t<th rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\">".wfMsg('poc-sinfo-cnf-types-and-exts')."</th>\n";
+		ksort($wgPieceOfCodeConfig['fontcodes']);
+		foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $list) {
+			$out.= "\t\t\t\t<th>{$type}</th>\n";
+			if(count($list)) {
+				$out.= "\t\t\t\t<td>*.".implode(', *.',$list)."</td>\n";
+			} else {
+				$out.= "\t\t\t\t<td colspan=\"2\"><i>".wfMsg('poc-none')."</i></td>\n";
+			}
+			$out.= "\t\t\t</tr><tr>\n";
+		}
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-forbidden-exts')."</th>\n";
+		if(count($wgPieceOfCodeConfig['fontcodes-forbidden'])) {
+			$out.= "\t\t\t\t<td colspan=\"2\">*.".implode(', *.',$wgPieceOfCodeConfig['fontcodes-forbidden'])."</td>\n";
+		} else {
+			$out.= "\t\t\t\t<td colspan=\"2\"><i>".wfMsg('poc-none')."</i></td>\n";
+		}
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-empty-exts')."</th>\n";
+		$out.= "\t\t\t\t<td colspan=\"2\">".($wgPieceOfCodeConfig['fontcodes-allowempty']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-maxhighlight')."</th>\n";
+		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['highlighting']/1024)."KB</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-maxshowing')."</th>\n";
+		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['showing']/1024)."KB</td>\n";
+		$out.= "\t\t\t</tr>\n";
+		$out.= "\t\t</table>\n";
+		/* @} */
+		/*
 		 * Section: Links
 		 * @{
 		 */
@@ -329,6 +367,8 @@ class PieceOfCode extends SpecialPage {
 				POCStoredCodes::Instance()->removeByCode($fontcode['code']);
 				if(!$this->_errors->ok()) {
 					$out.= $this->_errors->getLastError()."<br/>";
+				} else {
+					$out.="\t\t<p>".wfMsg('poc-sinfo-file-deleted')."</p>\n";
 				}
 
 				$out.= "\t\t\t\t<input type=\"button\" value=\"".wfMsg('poc-back')."\" onClick=\"document.location.href='{$returnUrl}';return false\"/>\n";
