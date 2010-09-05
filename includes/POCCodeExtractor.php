@@ -105,12 +105,10 @@ class POCCodeExtractor {
 		if($this->_fileInfo) {
 			global	$wgPieceOfCodeConfig;
 			global	$wgParser;
-			$tags = $wgParser->getTags();
 
-			if(in_array('syntaxhighlight', $tags)) {
-				$tag = 'syntaxhighlight';
-			} elseif(in_array('source', $tags)) {
-				$tag = 'source';
+			$tag = '';
+			if(!PieceOfCode::CheckSyntaxHighlightExtension($tag)) {
+				$out.= $this->_errors->getLastError();
 			}
 
 			$upload_path = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$this->_fileInfo['upload_path'];
