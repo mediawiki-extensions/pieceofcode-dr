@@ -100,6 +100,7 @@ class PieceOfCode extends SpecialPage {
 	public function __clone() {
 		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
+
 	/*
 	 * Public Methods.
 	 */
@@ -479,13 +480,9 @@ class PieceOfCode extends SpecialPage {
 		$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
 
 		if($fileInfo) {
-			global	$wgParser;
-			$tags = $wgParser->getTags();
-
-			if(in_array('syntaxhighlight', $tags)) {
-				$tag = 'syntaxhighlight';
-			} elseif(in_array('source', $tags)) {
-				$tag = 'source';
+			$tag = '';
+			if(!PieceOfCode::CheckSyntaxHighlightExtension($tag)) {
+				$out.= "<br/>".$this->_errors->getLastError();
 			}
 
 			$filepath = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path'];
@@ -515,6 +512,31 @@ class PieceOfCode extends SpecialPage {
 	/*
 	 * Public Class Methods.
 	 */
+	/**
+	 * @todo doc
+	 */
+	public static function CheckSyntaxHighlightExtension(&$tag) {
+		$tag = '';
+
+		global	$wgParser;
+		$tags = $wgParser->getTags();
+
+		if(in_array('syntaxhighlight', $tags)) {
+			$tag = 'syntaxhighlight';
+		} elseif(in_array('source', $tags)) {
+			$tag = 'source';
+		}
+
+		if(!$tag) {
+			POCErrorsHolder::Instance()->setLastError(wfMsg('poc-errmsg-stylecode-extension'));
+			return false;
+		} else {
+			return true;
+		}
+	}
+	/**
+	 * @todo doc
+	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {
 			$c = __CLASS__;
@@ -523,6 +545,10 @@ class PieceOfCode extends SpecialPage {
 
 		return self::$_Instance;
 	}
+	/**
+	 * @todo doc
+	 * @param string $name @todo doc
+	 */
 	public static function Property($name) {
 		$name = strtolower($name);
 		if(!isset(PieceOfCode::$_Properties[$name])) {

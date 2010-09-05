@@ -47,6 +47,7 @@ $messages['en'] = array(
 	'poc-errmsg-remove-file'	=> 'Unable to remove file \'$1\'',
 	'poc-errmsg-svn-file-exist'	=> 'This file already exists on the system (path: \'$1\')',
 	'poc-errmsg-svn-no-file'	=> 'File does not exists (path: \'$1\')',
+	'poc-errmsg-stylecode-extension'=> 'The extension <a href="http://www.mediawiki.org/wiki/Extension:SyntaxHighlight">SyntaxHighlight</a> is required to show font-codes in the right way',
 	'poc-errmsg-unknown-dbtype'	=> 'Unknown database type \'$1\'',
 	'poc-errmsg-unknown-tcode'	=> 'Unknown font-code type (extension: *.$1)',
 
@@ -132,6 +133,7 @@ $messages['es'] = array(
 	'poc-errmsg-remove-file'	=> 'No es posible elimiar el archivo \'$1\'',
 	'poc-errmsg-svn-file-exist'	=> 'Este archivo ya se encuentra presente en el sistema (ruta: \'$1\')',
 	'poc-errmsg-svn-no-file'	=> 'El archivo no existe (ruta: \'$1\')',
+	'poc-errmsg-stylecode-extension'=> 'La extensión <a href="http://www.mediawiki.org/wiki/Extension:SyntaxHighlight">SyntaxHighlight</a> es necesaria para motrar los fuentes correctamente',
 	'poc-errmsg-unknown-dbtype'	=> 'Tipo de base de datos \'$1\' desconocido',
 	'poc-errmsg-unknown-tcode'	=> 'Tipo de código fuente desconocido (extensión: *.$1)',
 
