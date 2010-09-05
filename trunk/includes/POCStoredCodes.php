@@ -165,7 +165,6 @@ class POCStoredCodes {
 		$out = null;
 
 		if($this->_dbtype == 'mysql') {
-			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
@@ -204,7 +203,6 @@ class POCStoredCodes {
 		$multiple = ($connection === false || $filepath === false || $revision === false);
 
 		if($this->_dbtype == 'mysql') {
-			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
@@ -365,7 +363,6 @@ class POCStoredCodes {
 		$out = false;
 
 		if($this->_dbtype == 'mysql') {
-			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
 
 			if($this->_errors->ok()) {
@@ -399,7 +396,6 @@ class POCStoredCodes {
 		$out = null;
 
 		if($this->_dbtype == 'mysql') {
-			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);

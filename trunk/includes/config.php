@@ -79,10 +79,17 @@ $wgPieceOfCodeConfig['fontcodes-forbidden']	= array('exe', 'so', 'zip', 'rar', '
 $wgPieceOfCodeConfig['fontcodes-allowempty']	= false;
 /** 	@} */
 /**
- * @todo doc.
+ * These variables allows to enable/disable information on
+ * [[Special:PieceOfCode]].
  * 	@{
  */
-$wgPieceOfCodeConfig['showinstalldir']		= true;
+$wgPieceOfCodeConfig['show']			= array();
+$wgPieceOfCodeConfig['show']['installdir']	= true;
+$wgPieceOfCodeConfig['show']['tablenames']	= true;
+$wgPieceOfCodeConfig['show']['binarypaths']	= true;
+$wgPieceOfCodeConfig['show']['updaloaddirs']	= true;
+$wgPieceOfCodeConfig['show']['svnusernames']	= true;
+$wgPieceOfCodeConfig['show']['svnpasswords']	= false;
 /** 	@} */
 /**
  * Others.
