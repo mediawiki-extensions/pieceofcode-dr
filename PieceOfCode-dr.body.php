@@ -71,7 +71,7 @@ class PieceOfCode extends SpecialPage {
 		'lines'		=> '',		//!<
 	);
 
-	protected function __construct() {
+	public function __construct() {
 		parent::__construct('PieceOfCode');
 
 		/*
@@ -185,6 +185,7 @@ class PieceOfCode extends SpecialPage {
 	protected function basicInformation() {
 		global	$wgOut;
 		global	$wgUser;
+		global	$wgDBprefix;
 		global	$wgPieceOfCodeSVNConnections;
 		global	$wgPieceOfCodeConfig;
 		global	$wgPieceOfCodeExtensionSysDir;
@@ -218,7 +219,7 @@ class PieceOfCode extends SpecialPage {
 		}
 		$out.= "\t\t\t</ul></li>\n";
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-url').":</strong> ".PieceOfCode::Property('url')."</li>\n";
-		if($wgPieceOfCodeConfig['showinstalldir']) {
+		if($wgPieceOfCodeConfig['show']['installdir']) {
 			$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-installation-directory').":</strong> ".dirname(__FILE__)."</li>\n";
 		}
 		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-svn').":</strong><ul>\n";
@@ -248,10 +249,18 @@ class PieceOfCode extends SpecialPage {
 			$out.= "\t\t\t\t<td>{$svnconn['url']}</td>\n";
 			$out.= "\t\t\t</tr><tr>\n";
 			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-username')."</th>\n";
-			$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."</td>\n";
+			if($wgPieceOfCodeConfig['show']['svnusernames']) {
+				$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."</td>\n";
+			} else {
+				$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?wfMsg('poc-present'):wfMsg('poc-anonymous'))."</td>\n";
+			}
 			$out.= "\t\t\t</tr><tr>\n";
 			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-password')."</th>\n";
-			$out.= "\t\t\t\t<td>".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."</td>\n";
+			if($wgPieceOfCodeConfig['show']['svnpasswords']) {
+				$out.= "\t\t\t\t<td>".($svnconn['password']?$svnconn['password']:wfMsg('poc-not-present'))."</td>\n";
+			} else {
+				$out.= "\t\t\t\t<td>".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."</td>\n";
+			}
 			$out.= "\t\t\t</tr>\n";
 		}
 		$out.= "\t\t</table>\n";
@@ -303,10 +312,39 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t<a name=\"poc-sinfo-configuration\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-configuration')."</span></h2>\n";
 		$out.= "\t\t<table class=\"wikitable\">\n";
 		$out.= "\t\t\t<tr>\n";
-		$out.= "\t\t\t\t<th rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\">".wfMsg('poc-sinfo-cnf-types-and-exts')."</th>\n";
+		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-general')."</th>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		if($wgPieceOfCodeConfig['show']['binarypaths']) {
+			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-svn-path')."</th>\n";
+			$out.= "\t\t\t\t<td colspan=\"2\">{$wgPieceOfCodeConfig['svn-binary']}</td>\n";
+			$out.= "\t\t\t</tr><tr>\n";
+		}
+		if($wgPieceOfCodeConfig['enableuploads']) {
+			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-enable-uploads')."</th>\n";
+			$out.= "\t\t\t\t<td colspan=\"2\">".wfMsg('poc-enabled')."</td>\n";
+			$out.= "\t\t\t</tr><tr>\n";
+			if($wgPieceOfCodeConfig['show']['updaloaddirs']) {
+				$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-upload-directory')."</th>\n";
+				$out.= "\t\t\t\t<td colspan=\"2\">{$wgPieceOfCodeConfig['uploaddirectory']}</td>\n";
+				$out.= "\t\t\t</tr><tr>\n";
+			}
+		} else {
+			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-enable-uploads')."</th>\n";
+			$out.= "\t\t\t\t<td colspan=\"2\">".wfMsg('poc-disabled')."</td>\n";
+			$out.= "\t\t\t</tr><tr>\n";
+		}
+		if($wgPieceOfCodeConfig['show']['tablenames']) {
+			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-db-tablename')."</th>\n";
+			$out.= "\t\t\t\t<td colspan=\"2\">{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}</td>\n";
+			$out.= "\t\t\t</tr><tr>\n";
+		}
+
+		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-codes-cnf')."</th>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\" style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-types-and-exts')."</th>\n";
 		ksort($wgPieceOfCodeConfig['fontcodes']);
 		foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $list) {
-			$out.= "\t\t\t\t<th>{$type}</th>\n";
+			$out.= "\t\t\t\t<th style=\"text-align:left;\">{$type}</th>\n";
 			if(count($list)) {
 				$out.= "\t\t\t\t<td>*.".implode(', *.',$list)."</td>\n";
 			} else {
@@ -315,21 +353,46 @@ class PieceOfCode extends SpecialPage {
 			$out.= "\t\t\t</tr><tr>\n";
 		}
 		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-forbidden-exts')."</th>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-forbidden-exts')."</th>\n";
 		if(count($wgPieceOfCodeConfig['fontcodes-forbidden'])) {
 			$out.= "\t\t\t\t<td colspan=\"2\">*.".implode(', *.',$wgPieceOfCodeConfig['fontcodes-forbidden'])."</td>\n";
 		} else {
 			$out.= "\t\t\t\t<td colspan=\"2\"><i>".wfMsg('poc-none')."</i></td>\n";
 		}
 		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-empty-exts')."</th>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-empty-exts')."</th>\n";
 		$out.= "\t\t\t\t<td colspan=\"2\">".($wgPieceOfCodeConfig['fontcodes-allowempty']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
 		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-maxhighlight')."</th>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-maxhighlight')."</th>\n";
 		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['highlighting']/1024)."KB</td>\n";
 		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-cnf-maxshowing')."</th>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-maxshowing')."</th>\n";
 		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['showing']/1024)."KB</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+
+		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-miscellaneous')."</th>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-internal-css')."</th>\n";
+		$out.= "\t\t\t\t<td colspan=\"2\">".($wgPieceOfCodeConfig['autocss']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th rowspan=\"6\" style=\"text-align:left;\">".wfMsg('poc-sinfo-show-flags')."</th>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-installdir')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['installdir']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-tablenames')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['tablenames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-binarypaths')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['binarypaths']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-updaloaddirs')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['updaloaddirs']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-svnusernames')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['svnusernames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
+		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-svnpasswords')."</th>\n";
+		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['svnpasswords']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
 		$out.= "\t\t\t</tr>\n";
 		$out.= "\t\t</table>\n";
 		/* @} */
