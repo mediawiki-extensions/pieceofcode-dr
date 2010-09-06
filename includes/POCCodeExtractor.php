@@ -35,6 +35,10 @@ class POCCodeExtractor {
 	 */
 	protected	$_filename;
 	/**
+	 * @var string
+	 */
+	protected	$_highlightLines;
+	/**
 	 * @var array
 	 */
 	protected	$_lines;
@@ -69,7 +73,7 @@ class POCCodeExtractor {
 	 * @param array $params @todo doc
 	 * @param Parser $parser @todo doc
 	 */
-	public function load($input, $params, $parser) {
+	public function load($input, &$params, $parser) {
 		$out = "";
 		/*
 		 * Clearing status.
@@ -116,11 +120,11 @@ class POCCodeExtractor {
 			$out.= "<div class=\"PieceOfCode_code\">\n";
 			if($this->_showTitle) {
 				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$this->_connection}&path={$this->_filename}&revision={$this->_revision}");
-				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a></span>";
+				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a>".($this->_highlightLines?" highlight=\"{$this->_highlightLines}\"":"")."</span>";
 			}
 
 			if(isset($this->_lines[0])) {
-				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"{$this->_lines[0]}\">";
+				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"{$this->_lines[0]}\"".($this->_highlightLines?" highlight=\"{$this->_highlightLines}\"":"").">";
 				$file = file($upload_path);
 				for($i=$this->_lines[0]-1; $i<$this->_lines[1]; $i++) {
 					if(isset($file[$i])) {
@@ -165,10 +169,11 @@ class POCCodeExtractor {
 	protected function clear() {
 		$this->_showTitle = false;
 
-		$this->_filename   = '';
-		$this->_revision   = '';
-		$this->_connection = '';
-		$this->_lines      = array();
+		$this->_filename       = '';
+		$this->_revision       = '';
+		$this->_connection     = '';
+		$this->_lines          = array();
+		$this->_highlightLines = '';
 
 		$this->_fileInfo = null;
 	}
@@ -198,11 +203,18 @@ class POCCodeExtractor {
 	 * @todo doc
 	 * @param array $params @todo doc
 	 */
-	protected function loadParams($params) {
+	protected function loadParams(&$params) {
 		$out = "";
 
-		if(isset($params['title'])) {
-			$this->_showTitle = (strtolower($params['title']) == 'true');
+		foreach($params as $k => $v) {
+			switch($k) {
+				case 'title':
+					$this->_showTitle = (strtolower($v) == 'true');
+					break;
+				case 'highlight':
+					$this->_highlightLines = $v;
+					break;
+			}
 		}
 
 		return $out;
