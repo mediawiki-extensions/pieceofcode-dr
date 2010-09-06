@@ -59,7 +59,8 @@ $wgPieceOfCodeConfig['db-tablename']	= 'poc_codes';
  * 	@{
  */
 $wgPieceOfCodeConfig['fontcodes']		= array();
-$wgPieceOfCodeConfig['fontcodes']['bash']	= array('sh', 'mk', 'mak');
+$wgPieceOfCodeConfig['fontcodes']['bash']	= array('sh');
+$wgPieceOfCodeConfig['fontcodes']['make']	= array('mk', 'mak');
 $wgPieceOfCodeConfig['fontcodes']['cpp']	= array('cpp', 'h', 'hpp', 'c');
 $wgPieceOfCodeConfig['fontcodes']['php']	= array('php', 'inc', 'php3');
 $wgPieceOfCodeConfig['fontcodes']['text']	= array('txt', 'log');
