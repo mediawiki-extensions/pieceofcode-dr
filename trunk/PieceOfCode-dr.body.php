@@ -44,6 +44,10 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected	$_errors;
 	/**
+	 * @var POCFlags
+	 */
+	protected	$_flags;
+	/**
 	 * Error messages prefix.
 	 * @var string
 	 */
@@ -93,6 +97,7 @@ class PieceOfCode extends SpecialPage {
 		}
 
 		$this->_errors         = POCErrorsHolder::Instance();
+		$this->_flags          = POCFlags::Instance();
 		$this->_svnConnections = POCSVNConnections::Instance();
 		$this->_storedCodes    = POCStoredCodes::Instance();
 		$this->_stats          = POCStats::Instance();
