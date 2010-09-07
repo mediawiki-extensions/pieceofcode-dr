@@ -18,6 +18,7 @@ require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECT
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCErrorsHolder.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCSVNConnections.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCStoredCodes.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCStats.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCCodeExtractor.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'PieceOfCode-dr.body.php');
 

@@ -1,5 +1,7 @@
 Version 0.2:
 	* Highlight Specified lines.
+	* Adding POCStats: a new class to keep statistics.
+		** Adding configuration to manage this new feature.
 
 Version 0.1:
 	* Extension presentation.

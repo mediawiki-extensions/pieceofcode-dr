@@ -206,7 +206,7 @@ class POCStoredCodes {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
+			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_count', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
 			(!$multiple?"cod_connection = '{$connection}' and cod_path = '{$filepath}' and cod_revision = '{$revision}'":""));
 			if($multiple) {
 				$out = array();
@@ -218,9 +218,10 @@ class POCStoredCodes {
 							'path'		=> $row[3],
 							'lang'		=> $row[4],
 							'revision'	=> $row[5],
-							'upload_path'	=> $row[6],
-							'user'		=> $row[7],
-							'timestamp'	=> $row[8]
+							'count'		=> $row[6],
+							'upload_path'	=> $row[7],
+							'user'		=> $row[8],
+							'timestamp'	=> $row[9]
 					);
 				}
 			} else {

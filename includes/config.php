@@ -32,6 +32,15 @@ if(!isset($wgPieceOfCodeConfig) || !is_array($wgPieceOfCodeConfig)) {
  */
 $wgPieceOfCodeConfig['autocss']	= true;
 /**
+ * Enables statistics survey.
+ *	@{
+ */
+$wgPieceOfCodeConfig['stats']			= true;
+$wgPieceOfCodeConfig['db-stats-limited']	= false;	//! active stats limitaions.
+$wgPieceOfCodeConfig['db-stats-per-try']	= 2;		// 2 updates for each try.
+$wgPieceOfCodeConfig['db-stats-timelimit']	= 2592000;	// 30 days.
+/** 	@} */
+/**
  * Subversion.
  * 	@{
  */
@@ -52,7 +61,9 @@ $wgPieceOfCodeConfig['enableuploads']	= $wgEnableUploads;
  * Database.
  * 	@{
  */
-$wgPieceOfCodeConfig['db-tablename']	= 'poc_codes';
+$wgPieceOfCodeConfig['db-tablename']		= 'poc_codes';
+$wgPieceOfCodeConfig['db-tablename-texts']	= 'poc_pages_list';
+$wgPieceOfCodeConfig['db-tablename-ccounts']	= 'poc_codes_counts';
 /** 	@} */
 /**
  * Font-code types.
