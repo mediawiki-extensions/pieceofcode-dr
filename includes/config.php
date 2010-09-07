@@ -64,6 +64,7 @@ $wgPieceOfCodeConfig['enableuploads']	= $wgEnableUploads;
 $wgPieceOfCodeConfig['db-tablename']		= 'poc_codes';
 $wgPieceOfCodeConfig['db-tablename-texts']	= 'poc_pages_list';
 $wgPieceOfCodeConfig['db-tablename-ccounts']	= 'poc_codes_counts';
+$wgPieceOfCodeConfig['db-tablename-flags']	= 'poc_flags';
 /** 	@} */
 /**
  * Font-code types.
