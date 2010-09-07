@@ -53,6 +53,10 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected	$_lastError;
 	/**
+	 * @var POCStats
+	 */
+	protected	$_stats;
+	/**
 	 * @var POCStoredCodes
 	 */
 	protected	$_storedCodes;
@@ -91,6 +95,7 @@ class PieceOfCode extends SpecialPage {
 		$this->_errors         = POCErrorsHolder::Instance();
 		$this->_svnConnections = POCSVNConnections::Instance();
 		$this->_storedCodes    = POCStoredCodes::Instance();
+		$this->_stats          = POCStats::Instance();
 
 		$this->_errors->clearError();
 	}
@@ -274,10 +279,12 @@ class PieceOfCode extends SpecialPage {
 		$out.= "\t\t<table class=\"wikitable sortable\">\n";
 		$out.= "\t\t\t<tr>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-conn')."</th>\n";
-		//$out.= "\t\t\t\t<th class=\"unsortable\">".wfMsg('poc-sinfo-stored-codes-code')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-path')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-lang')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-rev')."</th>\n";
+		if($wgPieceOfCodeConfig['stats']) {
+			$out.= "\t\t\t\t<th class=\"unsortable\">".wfMsg('poc-sinfo-stored-codes-count')."</th>\n";
+		}
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-user')."</th>\n";
 		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-date')."</th>\n";
 		$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></th>\n";
@@ -289,10 +296,12 @@ class PieceOfCode extends SpecialPage {
 		foreach($files as $fileInfo) {
 			$out.= "\t\t\t<tr>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['connection']}</td>\n";
-			//$out.= "\t\t\t\t<td>{$fileInfo['code']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['path']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['lang']}</td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['revision']}</td>\n";
+			if($wgPieceOfCodeConfig['stats']) {
+				$out.= "\t\t\t\t<td>{$fileInfo['count']}</td>\n";
+			}
 			$auxUrl = Title::makeTitle(NS_USER,$fileInfo['user'])->escapeFullURL();
 			$out.= "\t\t\t\t<td><a href=\"{$auxUrl}\">{$fileInfo['user']}</a></td>\n";
 			$out.= "\t\t\t\t<td>{$fileInfo['timestamp']}</td>\n";
