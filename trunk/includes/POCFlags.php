@@ -94,6 +94,58 @@ class POCFlags {
 			
 		return $out;
 	}
+	public function set($code, $value, $type=false) {
+		if($this->_dbtype == 'mysql') {
+			global	$wgPieceOfCodeConfig;
+
+			$row   = array();
+			$fType = 'flg_ivalue';
+			if($type === false) {
+
+			}
+			switch($type) {
+				case 'B':
+					$row['flg_bvalue'] = $value;
+					$fType             = 'flg_bvalue';
+					break;
+				case 'I':
+					$row['flg_ivalue'] = $value;
+					$fType             = 'flg_ivalue';
+					break;
+				case 'F':
+					$row['flg_fvalue'] = $value;
+					$fType             = 'flg_fvalue';
+					break;
+				case 'S':
+					$row['flg_svalue'] = $value;
+					$fType             = 'flg_svalue';
+					break;
+			}
+			$row['flg_code'] = $code;
+			$row['flg_type'] = $type;
+
+			if($this->_errors->ok()) {
+				global	$wgDBprefix;
+
+				$dbr = &wfGetDB(DB_SLAVE);
+				$sql =	"insert\n".
+					"        into {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-flags']} (\n".
+					"                flg_code, flg_type, {$fType})\n".
+					"        values ('{$row['flg_code']}', '{$row['flg_type']}', '{$row[$fType]}')\n".
+					"                on duplicate key\n".
+					"                        update  {$fType} = '{$row[$fType]}'";
+				$res = $dbr->query($sql);
+				if($res === true) {
+					$out = true;
+				} else {
+					$this->_errors->setLastError(wfMsg('poc-errmsg-no-insert'));
+				}
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
+
+	}
 	//	/**
 	//	 * @todo doc
 	//	 * @param string $connection @todo doc

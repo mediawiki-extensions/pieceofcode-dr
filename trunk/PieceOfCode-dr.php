@@ -15,6 +15,7 @@ $wgPieceOfCodeExtensionSysDir = dirname(__FILE__);
 $wgPieceOfCodeExtensionWebDir = $wgScriptPath.'/extensions/'.basename(dirname(__FILE__));
 
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'config.php');
+require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCVersionManager.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCFlags.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCErrorsHolder.php');
 require_once($wgPieceOfCodeExtensionSysDir.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'POCSVNConnections.php');

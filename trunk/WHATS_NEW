@@ -2,6 +2,8 @@ Version 0.2:
 	* Highlight Specified lines.
 	* Adding POCStats: a new class to keep statistics.
 		** Adding configuration to manage this new feature.
+	* Adding class POCFlags in order to manage PieceOfCode flags.
+	* Adding class POCVersionManager in order to manage version upgrades of PieceOfCode.
 
 Version 0.1:
 	* Extension presentation.
