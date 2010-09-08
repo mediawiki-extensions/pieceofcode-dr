@@ -114,13 +114,15 @@ class POCVersionManager {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
-				"        add (cod_count int(10) not null default '-1')";
-			$error = $dbr->query($sql);
-			if($error === true) {
-				$out = true;
-			} else {
-				die(__FILE__.":".__LINE__);
+			if(!$dbr->fieldExists($wgPieceOfCodeConfig['db-tablename'], 'cod_count')) {
+				$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
+					"        add (cod_count int(10) not null default '-1')";
+				$error = $dbr->query($sql);
+				if($error === true) {
+					$out = true;
+				} else {
+					die(__FILE__.":".__LINE__);
+				}
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));

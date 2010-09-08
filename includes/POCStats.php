@@ -80,9 +80,7 @@ class POCStats {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename-ccounts'])) {
-				$out = true;	// @todo need to check the table struct is the same or not???
-			} else {
+			if(!$dbr->tableExists($wgPieceOfCodeConfig['db-tablename-ccounts'])) {
 				$sql =	"create table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} (\n".
 					"        cps_code       varchar(40) not null,\n".
 					"        cps_text_id    int(10) unsigned not null,\n".
@@ -115,9 +113,7 @@ class POCStats {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename-texts'])) {
-				$out = true;	// @todo need to check the table struct is the same or not???
-			} else {
+			if(!$dbr->tableExists($wgPieceOfCodeConfig['db-tablename-texts'])) {
 				$sql =	"create table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']} (\n".
 					"        plst_text_id    int(10) unsigned not null primary key,\n".
 					"        plst_page_id    int(10) unsigned not null,\n".
@@ -232,7 +228,7 @@ class POCStats {
 		if($this->_dbtype == 'mysql') {
 			global	$wgDBprefix;
 			global	$wgPieceOfCodeConfig;
-				
+
 			$globalCodes = array();
 
 			$dbr = &wfGetDB(DB_SLAVE);
