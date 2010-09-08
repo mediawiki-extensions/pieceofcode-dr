@@ -27,7 +27,7 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected static	$_Properties = array(
 						'name'                 => 'PieceOfCode',
-						'version'              => '0.1',
+						'version'              => '0.2',
 						'date'                 => '2010-08-28',
 						'_description'         => "PieceOfCode.",
 						'description'          => "PieceOfCode.<sup>[[Special:PieceOfCode|more]]</sup>",
@@ -78,9 +78,18 @@ class PieceOfCode extends SpecialPage {
 		'connection'	=> '',		//!<
 		'lines'		=> '',		//!<
 	);
-
+	/**
+	 * @var POCVersionManager
+	 */
+	protected	$_versionManager;
+	
 	public function __construct() {
 		parent::__construct('PieceOfCode');
+		
+		/*
+		 * Checking and updating version.
+		 */
+		$this->_versionManager = POCVersionManager::Instance();
 
 		/*
 		 * Loading messages.
