@@ -261,9 +261,7 @@ class POCStoredCodes {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename'])) {
-				$out = true;	// @todo need to check the table struct is the same or not???
-			} else {
+			if(!$dbr->tableExists($wgPieceOfCodeConfig['db-tablename'])) {
 				$sql =	"create table ".$wgDBprefix.$wgPieceOfCodeConfig['db-tablename']."(\n".
 					"        cod_id             integer      not null auto_increment primary key,\n".
 					"        cod_connection     varchar(20)  not null,\n".

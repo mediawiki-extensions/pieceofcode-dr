@@ -169,9 +169,7 @@ class POCFlags {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename-flags'])) {
-				$out = true;	// @todo need to check the table struct is the same or not???
-			} else {
+			if(!$dbr->tableExists($wgPieceOfCodeConfig['db-tablename-flags'])) {
 				$sql =	"create table ".$wgDBprefix.$wgPieceOfCodeConfig['db-tablename-flags']."(\n".
 					"        flg_code           varchar(20)               not null primary key,\n".
 					"        flg_type	    enum ('B', 'I', 'S', 'F') not null default 'S',\n".

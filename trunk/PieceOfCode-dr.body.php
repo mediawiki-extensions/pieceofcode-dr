@@ -82,10 +82,10 @@ class PieceOfCode extends SpecialPage {
 	 * @var POCVersionManager
 	 */
 	protected	$_versionManager;
-	
+
 	public function __construct() {
 		parent::__construct('PieceOfCode');
-		
+
 		/*
 		 * Checking and updating version.
 		 */
