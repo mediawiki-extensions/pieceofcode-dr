@@ -7,6 +7,7 @@ Version 0.2:
 	* Adding class POCFlags in order to manage PieceOfCode flags.
 	* Adding class POCVersionManager in order to manage version upgrades of PieceOfCode.
 	* Almost all Specia:PieceOfCode works with wiki text.
+	* Pre-recursive parse inside tags.
 
 Version 0.1:
 	* Extension presentation.

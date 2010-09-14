@@ -43,6 +43,10 @@ class POCCodeExtractor {
 	 */
 	protected	$_lines;
 	/**
+	 * @var bool
+	 */
+	protected	$_parseInput;
+	/**
 	 * @var int
 	 */
 	protected	$_revision;
@@ -89,6 +93,9 @@ class POCCodeExtractor {
 		 */
 		$out.= $this->loadParams($params);
 		if($this->_errors->ok()) {
+			if($this->_parseInput) {
+				$input = $parser->recursiveTagParse($input);
+			}
 			$out.= $this->loadVariables($input);
 		}
 
@@ -185,6 +192,7 @@ class POCCodeExtractor {
 		$this->_connection     = '';
 		$this->_lines          = array();
 		$this->_highlightLines = '';
+		$this->_parseInput     = false;
 
 		$this->_fileInfo = null;
 	}
@@ -220,10 +228,13 @@ class POCCodeExtractor {
 		foreach($params as $k => $v) {
 			switch($k) {
 				case 'title':
-					$this->_showTitle = (strtolower($v) == 'true');
+					$this->_showTitle = in_array(strtolower($v), array('true', 'title'));
 					break;
 				case 'highlight':
 					$this->_highlightLines = $v;
+					break;
+				case 'parseinput':
+					$this->_parseInput = in_array(strtolower($v), array('true', 'parseinput'));
 					break;
 			}
 		}
