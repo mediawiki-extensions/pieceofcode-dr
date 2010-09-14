@@ -453,7 +453,8 @@ class PieceOfCode extends SpecialPage {
 		 * @{
 		 */
 		$out.= "== ".wfMsg('poc-sinfo-links')." ==\n";
-		$out.= "*'''<strong>MediaWiki Extensions:''' http://www.mediawiki.org/wiki/Extension:PieceOfCode\n";
+		$out.= "*'''MediaWiki Extensions:''' http://www.mediawiki.org/wiki/Extension:PieceOfCode\n";
+		$out.= "*'''Official Documentation:''' http://wiki.daemonraco.com/wiki/PieceOfCode-dr\n";
 		$out.= "*'''GoogleCode Proyect Site:''' http://code.google.com/p/pieceofcode-dr/\n";
 		$out.= "*'''GoogleCode Issues Trak:''' http://code.google.com/p/pieceofcode-dr/issues\n";
 		/* @} */
