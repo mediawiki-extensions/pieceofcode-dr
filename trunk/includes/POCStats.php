@@ -51,6 +51,38 @@ class POCStats {
 	/*
 	 * Public methods.
 	 */
+	public function getCodePages($code) {
+		$out = false;
+
+		global	$wgPieceOfCodeConfig;
+
+		if($this->_dbtype == 'mysql') {
+			global	$wgDBprefix;
+
+			$globalCodes = array();
+
+			$dbr = &wfGetDB(DB_SLAVE);
+			
+			$sql =	"select	 cps_code       as code,\n".
+				"        page_id,\n".
+				"        cps_times      as times,\n".
+				"        page_title     as title,\n".
+				"        page_namespace as namespace\n".
+				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} inner join {$wgDBprefix}page\n".
+				"                on (cps_text_id = page_latest)\n".
+				"where   cps_code = '{$code}'";
+			$res = $dbr->query($sql);
+
+			$out = array();
+			while(($row = $dbr->fetchRow($res))) {
+				$out[] = $row;
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
+
+		return $out;
+	}
 	/**
 	 * @todo doc
 	 */
@@ -159,12 +191,19 @@ class POCStats {
 			$res = $dbr->query($sql);
 
 			$i = 0;
-			while(($row = $dbr->fetchRow($res)) && $i < $wgPieceOfCodeConfig['db-stats-per-try']) {
+			$j = 1;
+			if($wgPieceOfCodeConfig['db-stats-limited']) {
+				$limit = $wgPieceOfCodeConfig['db-stats-per-try'];
+			} else {
+				$limit = 1;
+				$j     = 0;
+			}
+			while(($row = $dbr->fetchRow($res)) && $i < $limit) {
 				$sql =	"delete from     {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}\n".
 					"where           cps_code    = '{$row['cps_code']}'".
 					" and            cps_text_id = '{$row['cps_text_id']}'";
 				$err = $dbr->query($sql);
-				$i++;
+				$i+=$j;
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
@@ -184,11 +223,13 @@ class POCStats {
 
 			$dbr = &wfGetDB(DB_SLAVE);
 			$sql =	"select  plst_text_id\n".
-				"from	 {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n".
+				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n".
 				"where   plst_text_id not in (\n".
 				"                select  plst_text_id\n".
-				"                from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']} inner join {$wgDBprefix}page\n".
-				"                                on (plst_text_id = page_latest))\n".
+				"                from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']} inner join `{$wgDBprefix}revision`\n".
+				"                                on (plst_text_id = rev_text_id)\n".
+				"                        inner join `{$wgDBprefix}page`\n".
+				"                                on (rev_id = page_latest))\n".
 				" or     plst_timestamp < (sysdate()-{$wgPieceOfCodeConfig['db-stats-timelimit']})";
 			$res = $dbr->query($sql);
 
@@ -218,6 +259,7 @@ class POCStats {
 	protected function updateNews() {
 		$this->updateNewTexts();
 		$this->updateCodesAndPages();
+		$this->updateZeroCounts();
 	}
 	/**
 	 * @todo doc
@@ -269,11 +311,11 @@ class POCStats {
 				}
 				foreach($codes as $k => $c) {
 					$sql =	"insert\n".
-					"        into {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} (\n".
-					"                cps_code, cps_text_id, cps_times)\n".
-					"        values ('{$k}','{$row['old_id']}','{$c}')\n".
-					"                on duplicate key\n".
-					"                        update cps_times = '{$c}'";
+						"        into {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} (\n".
+						"                cps_code, cps_text_id, cps_times)\n".
+						"        values ('{$k}','{$row['old_id']}','{$c}')\n".
+						"                on duplicate key\n".
+						"                        update cps_times = '{$c}'";
 					$err = $dbr->query($sql);
 				}
 			}
@@ -303,12 +345,14 @@ class POCStats {
 			$sql =	"insert\n".
 				"        into {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}(plst_text_id, plst_page_id)\n".
 				"        select  old_id, page_id\n".
-				"        from    {$wgDBprefix}page inner join {$wgDBprefix}text\n".
-				"                        on (old_id = page_latest)\n".
-				"        where   old_text like '%</pieceofcode>%'\n".
-				"         and    old_id not in (\n".
+				"        from    `{$wgDBprefix}page` inner join `{$wgDBprefix}revision`\n".
+				"                        on (page_latest = rev_id)\n".
+				"                inner join `{$wgDBprefix}text`\n".
+				"                        on (rev_text_id = old_id)\n".
+				"        where   old_id not in (\n".
 				"                        select  plst_text_id\n".
-				"                        from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']})\n";
+				"                        from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']})\n".
+				"         and    old_text like '%</pieceofcode>%'\n";
 			if($wgPieceOfCodeConfig['db-stats-limited']) {
 				$sql.="         limit {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
 			}
@@ -317,6 +361,38 @@ class POCStats {
 				$out = true;
 			} else {
 				die(__FILE__.":".__LINE__);
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
+
+		return $out;
+	}
+	protected function updateZeroCounts() {
+		$out = false;
+
+		if($this->_dbtype == 'mysql') {
+			global	$wgDBprefix;
+			global	$wgPieceOfCodeConfig;
+
+			$dbr = &wfGetDB(DB_SLAVE);
+			$sql =	"select  cod_code\n".
+				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
+				"where   cod_code not in (\n".
+				"                select  cod_code\n".
+				"                from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
+				"                                inner join {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}\n".
+				"                                        on (cod_code = cps_code))\n";
+			if($wgPieceOfCodeConfig['db-stats-limited']) {
+				$sql.="limit {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
+			}
+			$res = $dbr->query($sql);
+
+			while(($row = $dbr->fetchRow($res))) {
+				$sql =	"update  {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
+					"set     cod_count = '0'\n".
+					"where   cod_code  = '{$row['cod_code']}'";
+				$err = $dbr->query($sql);
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
