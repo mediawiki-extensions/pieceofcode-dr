@@ -193,7 +193,7 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param unknown_type $name @todo doc
+	 * @param string $name @todo doc
 	 */
 	public function varDefault($name) {
 		return (isset($this->_varDefaults[$name])?$this->_varDefaults[$name]:'');
@@ -202,6 +202,24 @@ class PieceOfCode extends SpecialPage {
 	/*
 	 * Protected Methods.
 	 */
+	/**
+	 * @todo doc
+	 */
+	protected function enableTagHTML() {
+		global	$wgRawHtml;
+		global	$wgParser;
+
+		$wgRawHtml = true;
+		/*
+		 * Resetting core tags to enable tag <html>
+		 * Only, from version 1.17 and above.
+		 * @{
+		 */
+		if(class_exists('CoreTagHooks')) {
+			CoreTagHooks::register($wgParser);
+		}
+		/* @} */
+	}
 	/**
 	 * Prints basic information on Special:PieceOfCode
 	 */
@@ -213,15 +231,14 @@ class PieceOfCode extends SpecialPage {
 		global	$wgPieceOfCodeConfig;
 		global	$wgPieceOfCodeExtensionSysDir;
 		global	$wgPieceOfCodeExtensionWebDir;
-		global	$wgRawHtml;
 		
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
-		
-		$wgRawHtml_bak = $wgRawHtml;
-		$wgRawHtml     = true;
-		
+
+		$this->enableTagHTML();
+
 		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
 		$out.= "__TOC__\n";
+		$out.= "__NOEDITSECTION__\n";
 		
 		/*
 		 * Section: Extension information.
@@ -316,12 +333,8 @@ class PieceOfCode extends SpecialPage {
 			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
 			$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></html>\n";
 			if($wgPieceOfCodeConfig['stats']) {
-				if($fileInfo['count'] > 0) {
-					$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=page_stats&code={$fileInfo['code']}");
-					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
-				} else {
-					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
-				}
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=page_stats&code={$fileInfo['code']}");
+				$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
 			}
 			if($isAdmin) {
 				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=delete&code={$fileInfo['code']}");
@@ -460,9 +473,11 @@ class PieceOfCode extends SpecialPage {
 		/* @} */
 		
 		$wgOut->addWikiText($out);
-		$wgRawHtml = $wgRawHtml_bak;
-		
 	}
+	/**
+	 * @todo doc
+	 * @param array $fontcode @todo doc
+	 */
 	protected function deleteFontCode(&$fontcode) {
 		global	$wgOut;
 		global	$wgUser;
@@ -582,11 +597,20 @@ class PieceOfCode extends SpecialPage {
 				$out.="|-\n";
 				$out.="!".wfMsg('poc-sinfo-page')."\n";
 				$out.="!".wfMsg('poc-sinfo-stored-codes-count')."\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-user')."\n";
 				foreach(POCStats::Instance()->getCodePages($fontcode['code']) as $c) {
 					$out.="|-\n";
-//					$auxPage = Title::newFromID($c['page_id']);
-					$out.="|[[{$c['title']}]]\n";
+					$auxPage = Title::newFromID($c['page_id']);
+					$title   = $c['title'];
+					/*
+					 * Checking if it isn't the default namesapace.
+					 */
+					if($auxPage->getNamespace() != NS_MAIN) {
+						$title = $auxPage->getNsText().$title;
+					}
+					$out.="|[[{$title}]]\n";
 					$out.="|{$c['times']}\n";
+					$out.="|[[User:{$c['last_user']}|{$c['last_user']}]]\n";
 				}
 				$out.="|}\n";
 
@@ -604,7 +628,12 @@ class PieceOfCode extends SpecialPage {
 	 * Public Class Methods.
 	 */
 	/**
-	 * @todo doc
+	 * This class method looks for a hook for tag &lt;syntaxhighlight&gt; or
+	 * &lt;source%gt;. When one of these tags is present, it means, the
+	 * extension SyntaxHighlight is loaded.
+	 * @param string $tag When this method finishes, this parameter contains
+	 * the tag. Or a null string when it's not found.
+	 * @return boolean Returns true when a tag is found. Otherwise, false.
 	 */
 	public static function CheckSyntaxHighlightExtension(&$tag) {
 		$tag = '';
