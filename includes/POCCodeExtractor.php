@@ -51,6 +51,10 @@ class POCCodeExtractor {
 	 */
 	protected	$_showTitle;
 	/**
+	 * @var string
+	 */
+	protected	$_separator;
+	/**
 	 * @var POCStoredCodes
 	 */
 	protected	$_storeCodes;
@@ -120,19 +124,26 @@ class POCCodeExtractor {
 			$out.= "<div class=\"PieceOfCode_code\">\n";
 			if($this->_showTitle) {
 				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$this->_connection}&path={$this->_filename}&revision={$this->_revision}");
-				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a>".($this->_highlightLines?" highlight=\"{$this->_highlightLines}\"":"")."</span>";
+				$out.="<span class=\"PieceOfCode_title\"><a href=\"{$auxUrl}\"><strong>{$this->_connection}></strong>{$this->_filename}:{$this->_revision}</a></span>";
 			}
 
-			if(isset($this->_lines[0])) {
-				$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line start=\"{$this->_lines[0]}\"".($this->_highlightLines?" highlight=\"{$this->_highlightLines}\"":"").">";
-				$file = file($upload_path);
-				for($i=$this->_lines[0]-1; $i<$this->_lines[1]; $i++) {
-					if(isset($file[$i])) {
-						$auxOut.=$file[$i];
+			$auxCount = count($this->_lines);
+			if($auxCount) {
+				foreach($this->_lines as $l) {
+					$auxCount--;
+					$auxOut = "<{$tag} lang=\"{$this->_fileInfo['lang']}\" line=\"GESHI_NORMAL_LINE_NUMBERS\" start=\"{$l[0]}\"".($this->_highlightLines?" highlight=\"{$this->_highlightLines}\"":"").">";
+					$file = file($upload_path);
+					for($i=$l[0]-1; $i<$l[1]; $i++) {
+						if(isset($file[$i])) {
+							$auxOut.=$file[$i];
+						}
+					}
+					$auxOut.= "</{$tag}>";
+					$out.= $wgParser->recursiveTagParse($auxOut);
+					if($this->_separator && $auxCount > 0) {
+						$out.=html_entity_decode($this->_separator);
 					}
 				}
-				$auxOut.= "</{$tag}>";
-				$out.= $wgParser->recursiveTagParse($auxOut);
 			} else {
 				$st = stat($upload_path);
 					
@@ -148,7 +159,7 @@ class POCCodeExtractor {
 						$out .= $this->_errors->setLastError(wfMsg('poc-errmsg-large-highlight', $wgPieceOfCodeConfig['maxsize']['highlighting']));
 						$lang = "text";
 					}
-					$auxOut = "<{$tag} lang=\"{$lang}\" line start=\"1\">";
+					$auxOut = "<{$tag} lang=\"{$lang}\" line=\"GESHI_NORMAL_LINE_NUMBERS\" start=\"1\">";
 					$auxOut.= file_get_contents($upload_path);
 					$auxOut.= "</{$tag}>";
 					$out.= $wgParser->recursiveTagParse($auxOut);
@@ -230,20 +241,28 @@ class POCCodeExtractor {
 		$this->_filename   = $this->getVariable($input, 'file');
 		$this->_revision   = $this->getVariable($input, 'revision', true);
 		$this->_connection = $this->getVariable($input, 'connection');
-		$this->_lines      = explode('-', $this->getVariable($input, 'lines'));
+		$this->_separator  = $this->getVariable($input, 'separator');
+		$this->_lines      = explode(',', $this->getVariable($input, 'lines'));
+
+		$auxLen = count($this->_lines);
+		for($i=0; $i<$auxLen; $i++) {
+			$this->_lines[$i] = explode('-', $this->_lines[$i]);
+			if(isset($this->_lines[$i][0]) && isset($this->_lines[$i][1])) {
+				$this->_lines[$i][0] = trim($this->_lines[$i][0]);
+				$this->_lines[$i][1] = trim($this->_lines[$i][1]);
+
+				if($this->_lines[$i][0] > $this->_lines[$i][1]) {
+					unset($this->_lines[$i]);
+				}
+			} else {
+				unset($this->_lines[$i]);
+			}
+		}
 
 		/*
-		 * Checking lines values.
+		 * Last lines values check.
 		 */
-		if(isset($this->_lines[0]) && isset($this->_lines[1])) {
-			$this->_lines[0] = trim($this->_lines[0]);
-			$this->_lines[1] = trim($this->_lines[1]);
-
-			if($this->_lines[0] > $this->_lines[1]) {
-				unset($this->_lines);
-				$this->_lines = array();
-			}
-		} else {
+		if(count($this->_lines) < 1) {
 			unset($this->_lines);
 			$this->_lines = array();
 		}

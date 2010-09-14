@@ -37,8 +37,14 @@ $wgPieceOfCodeConfig['autocss']	= true;
  */
 $wgPieceOfCodeConfig['stats']			= true;
 $wgPieceOfCodeConfig['db-stats-limited']	= false;	//! active stats limitaions.
-$wgPieceOfCodeConfig['db-stats-per-try']	= 2;		// 2 updates for each try.
-$wgPieceOfCodeConfig['db-stats-timelimit']	= 2592000;	// 30 days.
+$wgPieceOfCodeConfig['db-stats-per-try']	= 2;		//! 2 updates for each try.
+$wgPieceOfCodeConfig['db-stats-timelimit']	= 2592000;	//! 30 days.
+/** 	@} */
+/**
+ * Enables history.
+ *	@{
+ */
+$wgPieceOfCodeConfig['history']			= true;
 /** 	@} */
 /**
  * Subversion.
@@ -109,8 +115,8 @@ $wgPieceOfCodeConfig['show']['svnpasswords']	= false;
  * 	@{
  */
 $wgPieceOfCodeConfig['maxsize']			= array();
-$wgPieceOfCodeConfig['maxsize']['highlighting']	= 30720;	// 30KB
-$wgPieceOfCodeConfig['maxsize']['showing']	= 51200;	// 50KB
+$wgPieceOfCodeConfig['maxsize']['highlighting']	= 30720;	//! 30KB
+$wgPieceOfCodeConfig['maxsize']['showing']	= 51200;	//! 50KB
 /** 	@} */
 /** @} */
 ?>

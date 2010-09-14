@@ -162,6 +162,9 @@ class PieceOfCode extends SpecialPage {
 					$this->showFontCode($fontcode);
 					break;
 				}
+			case 'page_stats':
+				$this->statPagesByCode(&$fontcode);
+				break;
 			default:
 				$this->basicInformation();
 		}
@@ -210,229 +213,254 @@ class PieceOfCode extends SpecialPage {
 		global	$wgPieceOfCodeConfig;
 		global	$wgPieceOfCodeExtensionSysDir;
 		global	$wgPieceOfCodeExtensionWebDir;
-
+		global	$wgRawHtml;
+		
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
-
-		$out.= "\t\t<span style=\"float:right;text-align:center;\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></span>";
-		$i = 0;
-		$out.= "\t\t<table id=\"toc\" class=\"toc\" summary=\"Contents\"><tbody><tr><td><div id=\"toctitle\"><h2>Contents</h2></div>\n";
-		$out.= "\t\t\t<ul>\n";
-		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-extension-information\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-extension-information')."</span></a></li>\n";
-		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-svn-connections\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-svn-connections')."</span></a></li>\n";
-		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-stored-codes\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-stored-codes')."</span></a></li>\n";
-		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-configuration\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-configuration')."</span></a></li>\n";
-		$out.= "\t\t\t\t<li class=\"toclevel-1\"><a href=\"#poc-sinfo-links\"><span class=\"tocnumber\">".(++$i)."</span> <span class=\"toctext\">".wfMsg('poc-sinfo-links')."</span></a></li>\n";
-		$out.= "\t\t\t</ul>\n";
-		$out.= "\t\t</td></tr></tbody></table>\n";
+		
+		$wgRawHtml_bak = $wgRawHtml;
+		$wgRawHtml     = true;
+		
+		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
+		$out.= "__TOC__\n";
+		
 		/*
 		 * Section: Extension information.
 		 * @{
 		 */
-		$out.= "\t\t<a name=\"poc-sinfo-extension-information\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-extension-information')."</span></h2>\n";
-		$out.= "\t\t<ul>\n";
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-name').":</strong> ".PieceOfCode::Property('name')."</li>\n";
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-version').":</strong> ".PieceOfCode::Property('version')."</li>\n";
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-description').":</strong> ".PieceOfCode::Property('_description')."</li>\n";
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-author').":</strong><ul>\n";
+		$out.= "== ".wfMsg('poc-sinfo-extension-information')." ==\n";
+		$out.= "*'''".wfMsg('poc-sinfo-name').":''' ".PieceOfCode::Property('name')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-version').":''' ".PieceOfCode::Property('version')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-description').":''' ".PieceOfCode::Property('_description')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-author').":'''\n";
 		foreach(PieceOfCode::Property('author') as $author) {
-			$out.= "\t\t\t\t<li>{$author}</li>\n";
+			$out.= "**{$author}\n";
 		}
-		$out.= "\t\t\t</ul></li>\n";
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-url').":</strong> ".PieceOfCode::Property('url')."</li>\n";
+		$out.= "*'''".wfMsg('poc-sinfo-url').":''' ".PieceOfCode::Property('url')."\n";
 		if($wgPieceOfCodeConfig['show']['installdir']) {
-			$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-installation-directory').":</strong> ".dirname(__FILE__)."</li>\n";
+			$out.= "*'''".wfMsg('poc-sinfo-installation-directory').":''' ".dirname(__FILE__)."\n";
 		}
-		$out.= "\t\t\t<li><strong>".wfMsg('poc-sinfo-svn').":</strong><ul>\n";
+		$out.= "*'''".wfMsg('poc-sinfo-svn').":'''\n";
 		$aux = str_replace('$', '', PieceOfCode::Property('svn-revision'));
 		$aux = str_replace('LastChangedRevision: ', '', $aux);
-		$out.= "\t\t\t\t<li><strong>".wfMsg('poc-sinfo-svn-revision').":</strong> r{$aux}</li>\n";
+		$out.= "**'''".wfMsg('poc-sinfo-svn-revision').":''' r{$aux}\n";
 		$aux = str_replace('$', '', PieceOfCode::Property('svn-date'));
 		$aux = str_replace('LastChangedDate: ', '', $aux);
-		$out.= "\t\t\t\t<li><strong>".wfMsg('poc-sinfo-svn-date').":</strong> {$aux}</li>\n";
-		$out.= "\t\t\t</ul></li>\n";
-		$out.= "\t\t</ul>\n";
+		$out.= "**'''".wfMsg('poc-sinfo-svn-date').":''' {$aux}\n";
 		/* @} */
 		/*
 		 * Section: SVN Connections.
 		 * @{
 		 */
-		$out.= "\t\t<a name=\"poc-sinfo-svn-connections\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-svn-connections')."</span></h2>\n";
-		$out.= "\t\t<table class=\"wikitable\">\n";
-		$out.= "\t\t\t<tr>\n";
-		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-svn-connections')."</th>\n";
-		$out.= "\t\t\t</tr>\n";
+		$out.= "== ".wfMsg('poc-sinfo-svn-connections')." ==\n";
+		$out.= "{| class=\"wikitable\"\n";
+		$out.= "|-\n";
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-svn-connections')."\n";
 		ksort($wgPieceOfCodeSVNConnections);
 		foreach($wgPieceOfCodeSVNConnections as $ksvnconn => $svnconn) {
-			$out.= "\t\t\t<tr>\n";
-			$out.= "\t\t\t\t<th rowspan=\"3\" style=\"text-align:left\">{$ksvnconn}</th>\n";
-			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-url')."</th>\n";
-			$out.= "\t\t\t\t<td>{$svnconn['url']}</td>\n";
-			$out.= "\t\t\t</tr><tr>\n";
-			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-username')."</th>\n";
+			$out.= "|-\n";
+			$out.= "!rowspan=\"3\" style=\"text-align:left\"|{$ksvnconn}\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-url')."\n";
+			$out.= "|{$svnconn['url']}\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-username')."\n";
 			if($wgPieceOfCodeConfig['show']['svnusernames']) {
-				$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."</td>\n";
+				$out.= "|".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."\n";
 			} else {
-				$out.= "\t\t\t\t<td>".(isset($svnconn['username'])?wfMsg('poc-present'):wfMsg('poc-anonymous'))."</td>\n";
+				$out.= "|".(isset($svnconn['username'])?wfMsg('poc-present'):wfMsg('poc-anonymous'))."\n";
 			}
-			$out.= "\t\t\t</tr><tr>\n";
-			$out.= "\t\t\t\t<th style=\"text-align:left\">".wfMsg('poc-sinfo-svnconn-password')."</th>\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-password')."\n";
 			if($wgPieceOfCodeConfig['show']['svnpasswords']) {
-				$out.= "\t\t\t\t<td>".($svnconn['password']?$svnconn['password']:wfMsg('poc-not-present'))."</td>\n";
+				$out.= "|".($svnconn['password']?$svnconn['password']:wfMsg('poc-not-present'))."\n";
 			} else {
-				$out.= "\t\t\t\t<td>".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."</td>\n";
+				$out.= "|".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."\n";
 			}
-			$out.= "\t\t\t</tr>\n";
 		}
-		$out.= "\t\t</table>\n";
+		$out.= "|}\n";
 		/* @} */
 		/*
 		 * Section: Stored Codes.
 		 * @{
 		 */
-		$out.= "\t\t<a name=\"poc-sinfo-stored-codes\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-stored-codes')."</span></h2>\n";
-		$out.= "\t\t<table class=\"wikitable sortable\">\n";
-		$out.= "\t\t\t<tr>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-conn')."</th>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-path')."</th>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-lang')."</th>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-rev')."</th>\n";
+		$out.= "== ".wfMsg('poc-sinfo-stored-codes')." ==\n";
+		$out.= "{| class=\"wikitable sortable\"\n";
+		$out.= "|-\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-conn')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-path')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-lang')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-rev')."\n";
 		if($wgPieceOfCodeConfig['stats']) {
-			$out.= "\t\t\t\t<th class=\"unsortable\">".wfMsg('poc-sinfo-stored-codes-count')."</th>\n";
+			$out.= "!".wfMsg('poc-sinfo-stored-codes-count')."\n";
 		}
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-user')."</th>\n";
-		$out.= "\t\t\t\t<th>".wfMsg('poc-sinfo-stored-codes-date')."</th>\n";
-		$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></th>\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-user')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-date')."\n";
+		$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></html>\n";
+		if($wgPieceOfCodeConfig['stats']) {
+			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></html>\n";
+		}
 		if($isAdmin) {
-			$out.= "\t\t\t\t<th class=\"unsortable\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-16px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></th>\n";
+			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></html>\n";
 		}
-		$out.= "\t\t\t</tr>\n";
 		$files = POCStoredCodes::Instance()->selectFiles();
 		foreach($files as $fileInfo) {
-			$out.= "\t\t\t<tr>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['connection']}</td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['path']}</td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['lang']}</td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['revision']}</td>\n";
+			$out.= "|-\n";
+			$out.= "|{$fileInfo['connection']}\n";
+			$out.= "|{$fileInfo['path']}\n";
+			$out.= "|{$fileInfo['lang']}\n";
+			$out.= "|{$fileInfo['revision']}\n";
 			if($wgPieceOfCodeConfig['stats']) {
-				$out.= "\t\t\t\t<td>{$fileInfo['count']}</td>\n";
+				$out.= "|{$fileInfo['count']}\n";
 			}
-			$auxUrl = Title::makeTitle(NS_USER,$fileInfo['user'])->escapeFullURL();
-			$out.= "\t\t\t\t<td><a href=\"{$auxUrl}\">{$fileInfo['user']}</a></td>\n";
-			$out.= "\t\t\t\t<td>{$fileInfo['timestamp']}</td>\n";
+			$out.= "|[[User:{$fileInfo['user']}|{$fileInfo['user']}]]\n";
+			$out.= "|{$fileInfo['timestamp']}\n";
 			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
-			$out.= "\t\t\t\t<td class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-16px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></td>\n";
+			$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></html>\n";
+			if($wgPieceOfCodeConfig['stats']) {
+				if($fileInfo['count'] > 0) {
+					$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=page_stats&code={$fileInfo['code']}");
+					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
+				} else {
+					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
+				}
+			}
 			if($isAdmin) {
 				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=delete&code={$fileInfo['code']}");
-				$out.= "\t\t\t\t<td class=\"unsortable\"><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-16px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></a></td>\n";
+				$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></a></html>\n";
 			}
-			$out.= "\t\t\t</tr>\n";
 		}
-		$out.= "\t\t</table>\n";
+		$out.= "|}\n";
 		/* @} */
 		/*
 		 * Section: Configuration.
 		 * @{
 		 */
-		$out.= "\t\t<a name=\"poc-sinfo-configuration\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-configuration')."</span></h2>\n";
-		$out.= "\t\t<table class=\"wikitable\">\n";
-		$out.= "\t\t\t<tr>\n";
-		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-general')."</th>\n";
-		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "== ".wfMsg('poc-sinfo-configuration')." ==\n";
+		$out.= "{|class=\"wikitable\"\n";
+		$out.= "|-\n";
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-general')."\n";
+		$out.= "|-\n";
 		if($wgPieceOfCodeConfig['show']['binarypaths']) {
-			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-svn-path')."</th>\n";
-			$out.= "\t\t\t\t<td colspan=\"2\">{$wgPieceOfCodeConfig['svn-binary']}</td>\n";
-			$out.= "\t\t\t</tr><tr>\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-svn-path')."\n";
+			$out.= "|colspan=\"2\"|{$wgPieceOfCodeConfig['svn-binary']}\n";
+			$out.= "|-\n";
 		}
 		if($wgPieceOfCodeConfig['enableuploads']) {
-			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-enable-uploads')."</th>\n";
-			$out.= "\t\t\t\t<td colspan=\"2\">".wfMsg('poc-enabled')."</td>\n";
-			$out.= "\t\t\t</tr><tr>\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-enable-uploads')."\n";
+			$out.= "|colspan=\"2\"|".wfMsg('poc-enabled')."\n";
+			$out.= "|-\n";
 			if($wgPieceOfCodeConfig['show']['updaloaddirs']) {
-				$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-upload-directory')."</th>\n";
-				$out.= "\t\t\t\t<td colspan=\"2\">{$wgPieceOfCodeConfig['uploaddirectory']}</td>\n";
-				$out.= "\t\t\t</tr><tr>\n";
+				$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-upload-directory')."\n";
+				$out.= "|colspan=\"2\"|{$wgPieceOfCodeConfig['uploaddirectory']}\n";
+				$out.= "|-\n";
 			}
 		} else {
-			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-enable-uploads')."</th>\n";
-			$out.= "\t\t\t\t<td colspan=\"2\">".wfMsg('poc-disabled')."</td>\n";
-			$out.= "\t\t\t</tr><tr>\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-enable-uploads')."\n";
+			$out.= "|colspan=\"2\"|".wfMsg('poc-disabled')."\n";
+			$out.= "|-\n";
 		}
 		if($wgPieceOfCodeConfig['show']['tablenames']) {
-			$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-db-tablename')."</th>\n";
-			$out.= "\t\t\t\t<td colspan=\"2\">{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}</td>\n";
-			$out.= "\t\t\t</tr><tr>\n";
+			$out.= "!rowspan=\"4\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablenames')."\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename')."\n";
+			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename-texts')."\n";
+			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename-ccounts')."\n";
+			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename-flags')."\n";
+			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-flags']}\n";
+			$out.= "|-\n";
 		}
 
-		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-codes-cnf')."</th>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\" style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-types-and-exts')."</th>\n";
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-codes-cnf')."\n";
+		$out.= "|-\n";
+		$out.= "!rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-types-and-exts')."\n";
 		ksort($wgPieceOfCodeConfig['fontcodes']);
 		foreach($wgPieceOfCodeConfig['fontcodes'] as $type => $list) {
-			$out.= "\t\t\t\t<th style=\"text-align:left;\">{$type}</th>\n";
+			$out.= "!style=\"text-align:left;\"|{$type}\n";
 			if(count($list)) {
-				$out.= "\t\t\t\t<td>*.".implode(', *.',$list)."</td>\n";
+				$out.= "|*.".implode(', *.',$list)."\n";
 			} else {
-				$out.= "\t\t\t\t<td colspan=\"2\"><i>".wfMsg('poc-none')."</i></td>\n";
+				$out.= "|colspan=\"2\"|''".wfMsg('poc-none')."''\n";
 			}
-			$out.= "\t\t\t</tr><tr>\n";
+			$out.= "|-\n";
 		}
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-forbidden-exts')."</th>\n";
+		$out.= "!style=\"text-align:justify;word-wrap:break-word;\"|".wfMsg('poc-sinfo-cnf-forbidden-exts')."\n";
 		if(count($wgPieceOfCodeConfig['fontcodes-forbidden'])) {
-			$out.= "\t\t\t\t<td colspan=\"2\">*.".implode(', *.',$wgPieceOfCodeConfig['fontcodes-forbidden'])."</td>\n";
+			$out.= "|colspan=\"2\"|<nowiki>*</nowiki>.".implode(', <nowiki>*</nowiki>.',$wgPieceOfCodeConfig['fontcodes-forbidden'])."\n";
 		} else {
-			$out.= "\t\t\t\t<td colspan=\"2\"><i>".wfMsg('poc-none')."</i></td>\n";
+			$out.= "|colspan=\"2\"|''".wfMsg('poc-none')."''\n";
 		}
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-empty-exts')."</th>\n";
-		$out.= "\t\t\t\t<td colspan=\"2\">".($wgPieceOfCodeConfig['fontcodes-allowempty']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-maxhighlight')."</th>\n";
-		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['highlighting']/1024)."KB</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-cnf-maxshowing')."</th>\n";
-		$out.= "\t\t\t\t<td colspan=\"2\">".round($wgPieceOfCodeConfig['maxsize']['showing']/1024)."KB</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-empty-exts')."\n";
+		$out.= "|colspan=\"2\"|".($wgPieceOfCodeConfig['fontcodes-allowempty']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-maxhighlight')."\n";
+		$out.= "|colspan=\"2\"|".round($wgPieceOfCodeConfig['maxsize']['highlighting']/1024)."KB\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-maxshowing')."\n";
+		$out.= "|colspan=\"2\"|".round($wgPieceOfCodeConfig['maxsize']['showing']/1024)."KB\n";
+		$out.= "|-\n";
 
-		$out.= "\t\t\t\t<th colspan=\"3\">".wfMsg('poc-sinfo-miscellaneous')."</th>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-internal-css')."</th>\n";
-		$out.= "\t\t\t\t<td colspan=\"2\">".($wgPieceOfCodeConfig['autocss']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th rowspan=\"6\" style=\"text-align:left;\">".wfMsg('poc-sinfo-show-flags')."</th>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-installdir')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['installdir']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-tablenames')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['tablenames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-binarypaths')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['binarypaths']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-updaloaddirs')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['updaloaddirs']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-svnusernames')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['svnusernames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr><tr>\n";
-		$out.= "\t\t\t\t<th style=\"text-align:left;\">".wfMsg('poc-sinfo-show-svnpasswords')."</th>\n";
-		$out.= "\t\t\t\t<td>".($wgPieceOfCodeConfig['show']['svnpasswords']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."</td>\n";
-		$out.= "\t\t\t</tr>\n";
-		$out.= "\t\t</table>\n";
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-statistics')."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-stat')."\n";
+		$out.= "|colspan=\"2\"|".($wgPieceOfCodeConfig['stats']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		if($wgPieceOfCodeConfig['stats']) {
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-stats-timelimit')."\n";
+			$out.= "|colspan=\"2\"|{$wgPieceOfCodeConfig['db-stats-timelimit']} ".wfMsg('poc-seconds')."\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-stats-limited')."\n";
+			$out.= "|colspan=\"2\"|".($wgPieceOfCodeConfig['db-stats-limited']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+			$out.= "|-\n";
+			if($wgPieceOfCodeConfig['db-stats-limited']) {
+				$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-stats-per-try')."\n";
+				$out.= "|colspan=\"2\"|{$wgPieceOfCodeConfig['db-stats-per-try']}\n";
+				$out.= "|-\n";
+			}
+		}
+
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-miscellaneous')."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-internal-css')."\n";
+		$out.= "|colspan=\"2\"|".($wgPieceOfCodeConfig['autocss']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!rowspan=\"6\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-flags')."\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-installdir')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['installdir']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-tablenames')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['tablenames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-binarypaths')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['binarypaths']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-updaloaddirs')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['updaloaddirs']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-svnusernames')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['svnusernames']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-svnpasswords')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['svnpasswords']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|}\n";
 		/* @} */
 		/*
 		 * Section: Links
 		 * @{
 		 */
-		$out.= "\t\t<a name=\"poc-sinfo-links\"></a><h2><span class=\"mw-headline\">".wfMsg('poc-sinfo-links')."</span></h2>\n";
-		$out.= "\t\t<ul>\n";
-		$out.= "\t\t\t<li><strong>MediaWiki Extensions:</strong> http://www.mediawiki.org/wiki/Extension:PieceOfCode</li>\n";
-		$out.= "\t\t\t<li><strong>GoogleCode Proyect Site:</strong> http://code.google.com/p/pieceofcode-dr/</li>\n";
-		$out.= "\t\t\t<li><strong>GoogleCode Issues Trak:</strong> http://code.google.com/p/pieceofcode-dr/issues</li>\n";
-		$out.= "\t\t</ul>\n";
+		$out.= "== ".wfMsg('poc-sinfo-links')." ==\n";
+		$out.= "*'''<strong>MediaWiki Extensions:''' http://www.mediawiki.org/wiki/Extension:PieceOfCode\n";
+		$out.= "*'''GoogleCode Proyect Site:''' http://code.google.com/p/pieceofcode-dr/\n";
+		$out.= "*'''GoogleCode Issues Trak:''' http://code.google.com/p/pieceofcode-dr/issues\n";
 		/* @} */
-
-		$wgOut->addHTML($out);
+		
+		$wgOut->addWikiText($out);
+		$wgRawHtml = $wgRawHtml_bak;
+		
 	}
 	protected function deleteFontCode(&$fontcode) {
 		global	$wgOut;
@@ -520,7 +548,7 @@ class PieceOfCode extends SpecialPage {
 				$lang = "text";
 			}
 			$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']}</h2>";
-			$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$lang}\" line start=\"1\">";
+			$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$lang}\" line=\"GESHI_NORMAL_LINE_NUMBERS\" start=\"1\">";
 			$out.= file_get_contents($filepath, false, null, -1, $wgPieceOfCodeConfig['maxsize']['showing']);
 			$out.= "</{$tag}></div>";
 		} else {
@@ -530,6 +558,45 @@ class PieceOfCode extends SpecialPage {
 			$out.=$this->_errors->getLastError();
 		}
 		$wgOut->addWikiText($out);
+	}
+	protected function statPagesByCode(&$fontcode) {
+		global	$wgOut;
+		global	$wgPieceOfCodeConfig;
+		if($wgPieceOfCodeConfig['stats']) {
+			$out = "";
+
+			$code = POCStoredCodes::Instance()->getByCode($fontcode['code']);
+			if($this->_errors->ok()) {
+				$out.="__TOC__\n";
+				$out.="== ".wfMsg('poc-sinfo-information')." ==\n";
+				$out.="*'''".wfMsg('poc-sinfo-connection')."''': {$code['connection']}\n";
+				$out.="*'''".wfMsg('poc-sinfo-path')."''': {$code['path']}\n";
+				$out.="*'''".wfMsg('poc-sinfo-revision')."''': {$code['revision']}\n";
+				$out.="*'''".wfMsg('poc-sinfo-lang')."''': {$code['lang']}\n";
+				$auxUrl = Title::makeTitle(NS_USER, $code['user'])->getFullURL();
+				$out.="*'''".wfMsg('poc-sinfo-user')."''': [[User:{$code['user']}|{$code['user']}]]\n";
+
+				$out.="== ".wfMsg('poc-sinfo-usage')." ==\n";
+				$out.="{|class=\"wikitable sortable\"\n";
+				$out.="|-\n";
+				$out.="!".wfMsg('poc-sinfo-page')."\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-count')."\n";
+				foreach(POCStats::Instance()->getCodePages($fontcode['code']) as $c) {
+					$out.="|-\n";
+//					$auxPage = Title::newFromID($c['page_id']);
+					$out.="|[[{$c['title']}]]\n";
+					$out.="|{$c['times']}\n";
+				}
+				$out.="|}\n";
+
+			} else {
+				$wgOut->addHTML($this->_errors->getLastError());
+			}
+
+			$wgOut->addWikiText($out);
+		} else {
+			$wgOut->addHTML($this->_errors->setLastError(wfMsg('poc-errmsg-stats-disabled')));
+		}
 	}
 
 	/*
