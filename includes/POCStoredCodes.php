@@ -69,7 +69,7 @@ class POCStoredCodes {
 	 * @todo doc
 	 * @param string $connection @todo doc
 	 * @param string $filepath @todo doc
-	 * @param int $revision @todo doc
+	 * @param integer $revision @todo doc
 	 */
 	public function getFile($connection, $filepath, $revision) {
 		$out = false;
@@ -269,6 +269,7 @@ class POCStoredCodes {
 					"        cod_path           varchar(255) not null,\n".
 					"        cod_lang	    varchar(20)  not null default 'text',\n".
 					"        cod_revision	    integer      not null default '-1',\n".
+					"        cod_count	    integer      not null default '-1',\n".
 					"        cod_upload_path    varchar(255) not null,\n".
 					"        cod_user           varchar(40)  not null,\n".
 					"        cod_timestamp      timestamp default current_timestamp\n".

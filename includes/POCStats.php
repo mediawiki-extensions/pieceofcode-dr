@@ -67,9 +67,12 @@ class POCStats {
 				"        page_id,\n".
 				"        cps_times      as times,\n".
 				"        page_title     as title,\n".
-				"        page_namespace as namespace\n".
-				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} inner join {$wgDBprefix}page\n".
-				"                on (cps_text_id = page_latest)\n".
+				"        page_namespace as namespace,\n".
+				"        rev_user_text  as last_user\n".
+				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']} inner join `{$wgDBprefix}revision`\n".
+				"                on (cps_text_id = rev_text_id)\n".
+				"        inner join `{$wgDBprefix}page`\n".
+				"                on (rev_id = page_latest)\n".
 				"where   cps_code = '{$code}'";
 			$res = $dbr->query($sql);
 
