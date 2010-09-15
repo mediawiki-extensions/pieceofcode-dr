@@ -77,9 +77,10 @@ class POCCodeExtractor {
 	 */
 	/**
 	 * @todo doc
-	 * @param string $input @todo doc
-	 * @param array $params @todo doc
-	 * @param Parser $parser @todo doc
+	 * @param $input @todo doc
+	 * @param $params @todo doc
+	 * @param $parser @todo doc
+	 * @return @todo doc
 	 */
 	public function load($input, &$params, $parser) {
 		$out = "";
@@ -113,6 +114,7 @@ class POCCodeExtractor {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	public function show() {
 		$out = "";
@@ -200,6 +202,10 @@ class POCCodeExtractor {
 	 * Return parameters from mediaWiki;
 	 *	use Default if parameter not provided;
 	 *	use '' or 0 if Default not provided
+	 * @param $input @todo doc
+	 * @param $name @todo doc
+	 * @param $isNumber @todo doc
+	 * @return @todo doc
 	 */
 	protected function getVariable($input, $name, $isNumber=false) {
 		if($this->_pocInstance->varDefault($name)) {
@@ -220,9 +226,10 @@ class POCCodeExtractor {
 	}
 	/**
 	 * @todo doc
-	 * @param array $params @todo doc
+	 * @param $params @todo doc
+	 * @return @todo doc
 	 */
-	protected function loadParams(&$params) {
+	protected function loadParams(array &$params) {
 		$out = "";
 
 		foreach($params as $k => $v) {
@@ -243,8 +250,9 @@ class POCCodeExtractor {
 	}
 	/**
 	 * This method tries to load all the useful information set between tags
-	 * <pieceofcode> and </pieceofcode>.
-	 * @param string $input Configuration text to be analyzed.
+	 * &lt;pieceofcode&gt; and &lt;/pieceofcode&gt;.
+	 * @param $input Configuration text to be analyzed.
+	 * @return @todo doc
 	 */
 	protected function loadVariables($input) {
 		$out = "";

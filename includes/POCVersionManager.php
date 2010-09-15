@@ -53,6 +53,7 @@ class POCVersionManager {
 	 */
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function getVersion() {
 		$version = $this->_flags->get('POC_VERSION');
@@ -61,7 +62,7 @@ class POCVersionManager {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			/**
+			/*
 			 * @author Alejandro Darío Simi
 			 * @date 2010-09-07
 			 * @warning
@@ -84,7 +85,8 @@ class POCVersionManager {
 	}
 	/**
 	 * @todo doc
-	 * @param string $version @todo doc
+	 * @param $version @todo doc
+	 * @return @todo doc
 	 */
 	protected function setVersion($version) {
 		if($this->_flags->set('POC_VERSION', $version, 'S')) {
@@ -92,22 +94,38 @@ class POCVersionManager {
 		}
 		return $this->_flags->get('POC_VERSION', true);
 	}
+	/**
+	 * This is the main method to launches every upgrade in the right way. 
+	 * @param $finalVersion This is the version number to reach. 
+	 */
 	protected function upToVersion($finalVersion) {
 		$currentVersion = $this->getVersion();
 		$updates        = 0;
-		while($updates < 10 && version_compare($currentVersion, $finalVersion) < 0) {
+		/*
+		 * This loop run until current version is the last one
+		 * 
+		 * @code
+		 * $updates < 100
+		 * @endcode
+		 * This condition avoids possible problems with versión checks
+		 */
+		while(version_compare($currentVersion, $finalVersion) < 0 && $updates < 100) {
+			$updates++;
+			
 			switch($currentVersion) {
 				case '0.1':
 					$this->upToVersion0_2();
 					$this->setVersion('0.2');
 					break;
 				default:
-					die(__FILE__.':'.__LINE__);
+					die(__FILE__.':'.__LINE__); //@fixme This should print a error message.
 			}
 			$currentVersion = $this->getVersion();
-			$updates++;
 		}
 	}
+	/**
+	 * This method tries to upgrade system from verion 0.1 up to 0.2.
+	 */
 	protected function upToVersion0_2() {
 		if($this->_dbtype == 'mysql') {
 			global	$wgDBprefix;
@@ -132,7 +150,7 @@ class POCVersionManager {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCVersionManager.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {

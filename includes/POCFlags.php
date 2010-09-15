@@ -12,6 +12,12 @@
  * @date 2010-08-28
  */
 
+/**
+ * @class POCFlags
+ * This class represents a list of flags stored in the data base.
+ * 
+ * @author Alejandro Darío Simi
+ */
 class POCFlags {
 	/**
 	 * @var POCFlags
@@ -52,8 +58,11 @@ class POCFlags {
 	 * Public methods.
 	 */
 	/**
-	 * @todo doc
-	 * @param string $code @todo doc
+	 * This method retrieves a value from the data base.
+	 * @param $code Identifier for the flag to retieve.
+	 * @param $reload This flag force to reload from database. This is
+	 * needed because POCFlags holds a cache.
+	 * @return Returns the value found.
 	 */
 	public function get($code, $reload=false) {
 		$out = false;
@@ -69,6 +78,9 @@ class POCFlags {
 				$res = $dbr->select($wgPieceOfCodeConfig['db-tablename-flags'], array('flg_code', 'flg_type', 'flg_bvalue', 'flg_ivalue', 'flg_float', 'flg_svalue'),
 					"flg_code = '{$code}'");
 				if($row = $dbr->fetchRow($res)) {
+					/*
+					 * @fixme cast values.
+					 */
 					switch($row['flg_type']) {
 						case 'B':
 							$this->_flags[$code] = $row['flg_bvalue'];
@@ -94,6 +106,12 @@ class POCFlags {
 			
 		return $out;
 	}
+	/**
+	 * @todo doc
+	 * @param $code @todo doc
+	 * @param $value @todo doc
+	 * @param $type @todo doc
+	 */
 	public function set($code, $value, $type=false) {
 		if($this->_dbtype == 'mysql') {
 			global	$wgPieceOfCodeConfig;
@@ -160,6 +178,7 @@ class POCFlags {
 	 */
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function createTable() {
 		$out = false;
@@ -197,7 +216,7 @@ class POCFlags {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCFlags.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {

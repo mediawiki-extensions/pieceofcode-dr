@@ -125,6 +125,8 @@ class PieceOfCode extends SpecialPage {
 	 */
 	/**
 	 * Inherited method. Please check parent class 'SpecialPage'.
+	 * @param $par @todo doc
+	 * @return @todo doc
 	 */
 	public function execute($par) {
 		$out = "";
@@ -171,11 +173,12 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param string $input @todo doc
-	 * @param array $params @todo doc
-	 * @param Parser $parser @todo doc
+	 * @param $input @todo doc
+	 * @param $params @todo doc
+	 * @param $parser @todo doc
+	 * @return @todo doc
 	 */
-	public function parse($input, $params, $parser) {
+	public function parse($input, array $params, $parser) {
 		/*
 		 * This variable will hold the content to be retorned. Eighter
 		 * some formatted XML text or an error message.
@@ -193,7 +196,8 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param string $name @todo doc
+	 * @param $name @todo doc
+	 * @return @todo doc
 	 */
 	public function varDefault($name) {
 		return (isset($this->_varDefaults[$name])?$this->_varDefaults[$name]:'');
@@ -231,7 +235,7 @@ class PieceOfCode extends SpecialPage {
 		global	$wgPieceOfCodeConfig;
 		global	$wgPieceOfCodeExtensionSysDir;
 		global	$wgPieceOfCodeExtensionWebDir;
-		
+
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
 
 		$this->enableTagHTML();
@@ -239,7 +243,7 @@ class PieceOfCode extends SpecialPage {
 		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
 		$out.= "__TOC__\n";
 		$out.= "__NOEDITSECTION__\n";
-		
+
 		/*
 		 * Section: Extension information.
 		 * @{
@@ -471,14 +475,14 @@ class PieceOfCode extends SpecialPage {
 		$out.= "*'''GoogleCode Proyect Site:''' http://code.google.com/p/pieceofcode-dr/\n";
 		$out.= "*'''GoogleCode Issues Trak:''' http://code.google.com/p/pieceofcode-dr/issues\n";
 		/* @} */
-		
+
 		$wgOut->addWikiText($out);
 	}
 	/**
 	 * @todo doc
-	 * @param array $fontcode @todo doc
+	 * @param $fontcode @todo doc
 	 */
-	protected function deleteFontCode(&$fontcode) {
+	protected function deleteFontCode(array &$fontcode) {
 		global	$wgOut;
 		global	$wgUser;
 		global	$wgPieceOfCodeSVNConnections;
@@ -532,9 +536,9 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param array $fontcode @todo doc
+	 * @param $fontcode @todo doc
 	 */
-	protected function showFontCode(&$fontcode) {
+	protected function showFontCode(array &$fontcode) {
 		$out = "";
 
 		global	$wgOut;
@@ -575,7 +579,11 @@ class PieceOfCode extends SpecialPage {
 		}
 		$wgOut->addWikiText($out);
 	}
-	protected function statPagesByCode(&$fontcode) {
+	/**
+	 * @todo doc
+	 * @param $fontcode @todo doc
+	 */
+	protected function statPagesByCode(array &$fontcode) {
 		global	$wgOut;
 		global	$wgPieceOfCodeConfig;
 		if($wgPieceOfCodeConfig['stats']) {
@@ -631,9 +639,9 @@ class PieceOfCode extends SpecialPage {
 	 * This class method looks for a hook for tag &lt;syntaxhighlight&gt; or
 	 * &lt;source%gt;. When one of these tags is present, it means, the
 	 * extension SyntaxHighlight is loaded.
-	 * @param string $tag When this method finishes, this parameter contains
-	 * the tag. Or a null string when it's not found.
-	 * @return boolean Returns true when a tag is found. Otherwise, false.
+	 * @param $tag When this method finishes, this parameter contains the
+	 * tag. Or a null string when it's not found.
+	 * @return Returns true when a tag is found. Otherwise, false.
 	 */
 	public static function CheckSyntaxHighlightExtension(&$tag) {
 		$tag = '';
@@ -655,7 +663,7 @@ class PieceOfCode extends SpecialPage {
 		}
 	}
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class PieceOfCode.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {
@@ -667,7 +675,8 @@ class PieceOfCode extends SpecialPage {
 	}
 	/**
 	 * @todo doc
-	 * @param string $name @todo doc
+	 * @param $name @todo doc
+	 * @return @todo doc
 	 */
 	public static function Property($name) {
 		$name = strtolower($name);

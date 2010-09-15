@@ -53,7 +53,8 @@ class POCStoredCodes {
 	 */
 	/**
 	 * @todo doc
-	 * @param string $code @todo doc
+	 * @param $code @todo doc
+	 * @return @todo doc
 	 */
 	public function getByCode($code) {
 		$out = false;
@@ -67,9 +68,10 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param string $connection @todo doc
-	 * @param string $filepath @todo doc
-	 * @param integer $revision @todo doc
+	 * @param $connection @todo doc
+	 * @param $filepath @todo doc
+	 * @param $revision @todo doc
+	 * @return @todo doc
 	 */
 	public function getFile($connection, $filepath, $revision) {
 		$out = false;
@@ -128,13 +130,15 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	public function isLoaded() {
 		return $this->_isLoaded;
 	}
 	/**
 	 * @todo doc
-	 * @param string $code @todo doc
+	 * @param $code @todo doc
+	 * @return @todo doc
 	 */
 	public function removeByCode($code) {
 		$out = false;
@@ -159,7 +163,8 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param string $code @todo doc
+	 * @param $code @todo doc
+	 * @return @todo doc
 	 */
 	public function selectByCode($code) {
 		$out = null;
@@ -193,9 +198,10 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param string $connection @todo doc
-	 * @param string $filepath @todo doc
-	 * @param stirng $revision @todo doc
+	 * @param $connection @todo doc
+	 * @param $filepath @todo doc
+	 * @param $revision @todo doc
+	 * @return @todo doc
 	 */
 	public function selectFiles($connection=false, $filepath=false, $revision=false) {
 		$out = null;
@@ -252,6 +258,7 @@ class POCStoredCodes {
 	 */
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function createTable() {
 		$out = false;
@@ -289,7 +296,8 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param string $filename @todo doc
+	 * @param $filename @todo doc
+	 * @return @todo doc
 	 */
 	protected function getLangFromExtension($filename) {
 		$out = '';
@@ -322,6 +330,9 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
+	 * @param $connInfo @todo doc
+	 * @param $fileInfo @todo doc
+	 * @return @todo doc
 	 */
 	protected function getSVNFile(&$connInfo, &$fileInfo) {
 		$out = false;
@@ -358,7 +369,8 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param unknown_type $fileInfo @todo doc
+	 * @param $fileInfo @todo doc
+	 * @return @todo doc
 	 */
 	protected function insertFile(&$fileInfo) {
 		$out = false;
@@ -391,7 +403,8 @@ class POCStoredCodes {
 	}
 	/**
 	 * @todo doc
-	 * @param string $code @todo doc
+	 * @param $code @todo doc
+	 * @return @todo doc
 	 */
 	protected function deleteByCode($code) {
 		$out = null;
@@ -415,7 +428,7 @@ class POCStoredCodes {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCStoredCodes.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {

@@ -45,7 +45,7 @@ class POCSVNConnections {
 	public function __clone() {
 		trigger_error(__CLASS__.': Clone is not allowed.', E_USER_ERROR);
 	}
-	
+
 	/*
 	 * Public methods.
 	 */
@@ -91,7 +91,7 @@ class POCSVNConnections {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCSVNConnections.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {
