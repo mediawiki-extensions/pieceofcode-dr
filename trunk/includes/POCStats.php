@@ -62,7 +62,7 @@ class POCStats {
 			$globalCodes = array();
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			
+				
 			$sql =	"select	 cps_code       as code,\n".
 				"        page_id,\n".
 				"        cps_times      as times,\n".
@@ -408,7 +408,7 @@ class POCStats {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCStats.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {

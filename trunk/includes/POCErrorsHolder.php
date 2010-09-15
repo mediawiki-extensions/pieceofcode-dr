@@ -47,7 +47,7 @@ class POCErrorsHolder {
 	 */
 	/**
 	 * @todo doc
-	 * @param string $msg @todo doc
+	 * @return @todo doc
 	 */
 	public function clearError() {
 		$this->_lastError = "";
@@ -56,7 +56,8 @@ class POCErrorsHolder {
 	}
 	/**
 	 * @todo doc
-	 * @param string $msg @todo doc
+	 * @param $message @todo doc
+	 * @return @todo doc
 	 */
 	public function formatErrorMessage($message) {
 		return "<span style=\"color:red;font-weight:bold;\">".$this->ERROR_PREFIX."$message</span>";
@@ -70,13 +71,15 @@ class POCErrorsHolder {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	public function ok() {
 		return $this->_ok;
 	}
-		/**
+	/**
 	 * Sets last error message.
-	 * @param string $msg Message to set.
+	 * @param $message Message to set.
+	 * @param $autoFormat Auto apply message formating.
 	 * @return Returns the message set.
 	 */
 	public function setLastError($message="", $autoFormat=true) {
@@ -93,7 +96,7 @@ class POCErrorsHolder {
 	 * Public class methods
 	 */
 	/**
-	 * @todo doc
+	 * @return Returns the singleton instance of this class POCErrorsHolder.
 	 */
 	public static function Instance() {
 		if (!isset(self::$_Instance)) {

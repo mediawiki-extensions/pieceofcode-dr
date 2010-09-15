@@ -453,6 +453,7 @@ SORT_BY_SCOPE_NAME     = NO
 # commands in the documentation.
 
 GENERATE_TODOLIST      = YES
+GENERATE_FIXMELIST     = YES
 
 # The GENERATE_TESTLIST tag can be used to enable (YES) or 
 # disable (NO) the test list. This list is created by putting \test 
