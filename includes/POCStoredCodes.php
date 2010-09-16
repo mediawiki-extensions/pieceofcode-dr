@@ -173,7 +173,7 @@ class POCStoredCodes {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
+			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_count', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
 			"cod_code = '{$code}'");
 			if($row = $dbr->fetchRow($res)) {
 				$out = array(
@@ -183,9 +183,10 @@ class POCStoredCodes {
 					'path'		=> $row[3],
 					'lang'		=> $row[4],
 					'revision'	=> $row[5],
-					'upload_path'	=> $row[6],
-					'user'		=> $row[7],
-					'timestamp'	=> $row[8]
+					'count'		=> $row[6],
+					'upload_path'	=> $row[7],
+					'user'		=> $row[8],
+					'timestamp'	=> $row[9]
 				);
 			} else {
 				$this->_errors->setLastError(wfMsg('poc-errmsg-query-no-result'));
@@ -203,7 +204,7 @@ class POCStoredCodes {
 	 * @param $revision @todo doc
 	 * @return @todo doc
 	 */
-	public function selectFiles($connection=false, $filepath=false, $revision=false) {
+	public function selectFiles($connection=false, $filepath=false, $revision=false, $full=true) {
 		$out = null;
 
 		$multiple = ($connection === false || $filepath === false || $revision === false);
@@ -212,38 +213,39 @@ class POCStoredCodes {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			$res = $dbr->select($wgPieceOfCodeConfig['db-tablename'], array('cod_id', 'cod_connection', 'cod_code', 'cod_path', 'cod_lang', 'cod_revision', 'cod_count', 'cod_upload_path', 'cod_user', 'cod_timestamp'),
-			(!$multiple?"cod_connection = '{$connection}' and cod_path = '{$filepath}' and cod_revision = '{$revision}'":""));
+			global	$wgDBprefix;
+
+			$qry.=	"select  cod_id          as id,\n".
+				"        cod_connection  as connection,\n".
+				"        cod_code        as code,\n".
+				"        cod_path        as path,\n".
+				"        cod_lang        as lang,\n".
+				"        cod_revision    as revision,\n".
+				"        cod_count       as count,\n".
+				"        cod_upload_path as upload_path,\n".
+				"        cod_user        as user,\n".
+				"        cod_timestamp   as timestamp\n".
+				"from	{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n";
+
+			if(!$multiple) {
+				$qry.=	"where   cod_connection = '{$connection}'\n".
+					" and    cod_path       = '{$filepath}'\n".
+					" and    cod_revision   = '{$revision}'\n";
+			}
+			if(!$full) {
+				$qry.=	"order by cod_count desc\n".
+					"limit ".($wgPieceOfCodeConfig['show']['stored-limit']+1)."\n";
+			}
+			
+			$res = $dbr->query($qry);
 			if($multiple) {
 				$out = array();
 				while($row = $dbr->fetchRow($res)) {
-					$out[] = array(
-							'id'		=> $row[0],
-							'connection'	=> $row[1],
-							'code'		=> $row[2],
-							'path'		=> $row[3],
-							'lang'		=> $row[4],
-							'revision'	=> $row[5],
-							'count'		=> $row[6],
-							'upload_path'	=> $row[7],
-							'user'		=> $row[8],
-							'timestamp'	=> $row[9]
-					);
+					$out[] = $row;
 				}
 			} else {
 				if($row = $dbr->fetchRow($res)) {
-					$out = array(
-							'id'		=> $row[0],
-							'connection'	=> $row[1],
-							'code'		=> $row[2],
-							'path'		=> $row[3],
-							'lang'		=> $row[4],
-							'revision'	=> $row[5],
-							'count'		=> $row[6],
-							'upload_path'	=> $row[7],
-							'user'		=> $row[8],
-							'timestamp'	=> $row[9]
-					);
+					$out = $row;
 				}
 			}
 		} else {
