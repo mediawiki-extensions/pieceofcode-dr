@@ -29,6 +29,7 @@ $messages['en'] = array(
 	'poc-present'		=> 'present',
 	'poc-seconds'		=> 'secs',
 	'poc-send'		=> 'send',
+	'poc-view-all'		=> 'View all',
 	'poc-yes'		=> 'yes',
 
 	'poc-errmsg-empty-tcode'	=> 'Files without extension are not allowed',
@@ -136,6 +137,7 @@ $messages['es'] = array(
 	'poc-present'		=> 'presente',
 	'poc-seconds'		=> 'segs',
 	'poc-send'		=> 'enviar',
+	'poc-view-all'		=> 'Ver todos',
 	'poc-yes'		=> 'sí',
 
 	'poc-errmsg-empty-tcode'	=> 'No se permiten archivos sin extensión',

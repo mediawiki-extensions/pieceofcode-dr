@@ -167,6 +167,9 @@ class PieceOfCode extends SpecialPage {
 			case 'page_stats':
 				$this->statPagesByCode(&$fontcode);
 				break;
+			case 'stored':
+				$this->viewAllStoredCodes(&$fontcode);
+				break;
 			default:
 				$this->basicInformation();
 		}
@@ -230,11 +233,6 @@ class PieceOfCode extends SpecialPage {
 	protected function basicInformation() {
 		global	$wgOut;
 		global	$wgUser;
-		global	$wgDBprefix;
-		global	$wgPieceOfCodeSVNConnections;
-		global	$wgPieceOfCodeConfig;
-		global	$wgPieceOfCodeExtensionSysDir;
-		global	$wgPieceOfCodeExtensionWebDir;
 
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
 
@@ -244,109 +242,21 @@ class PieceOfCode extends SpecialPage {
 		$out.= "__TOC__\n";
 		$out.= "__NOEDITSECTION__\n";
 
-		/*
-		 * Section: Extension information.
-		 * @{
-		 */
-		$out.= "== ".wfMsg('poc-sinfo-extension-information')." ==\n";
-		$out.= "*'''".wfMsg('poc-sinfo-name').":''' ".PieceOfCode::Property('name')."\n";
-		$out.= "*'''".wfMsg('poc-sinfo-version').":''' ".PieceOfCode::Property('version')."\n";
-		$out.= "*'''".wfMsg('poc-sinfo-description').":''' ".PieceOfCode::Property('_description')."\n";
-		$out.= "*'''".wfMsg('poc-sinfo-author').":'''\n";
-		foreach(PieceOfCode::Property('author') as $author) {
-			$out.= "**{$author}\n";
-		}
-		$out.= "*'''".wfMsg('poc-sinfo-url').":''' ".PieceOfCode::Property('url')."\n";
-		if($wgPieceOfCodeConfig['show']['installdir']) {
-			$out.= "*'''".wfMsg('poc-sinfo-installation-directory').":''' ".dirname(__FILE__)."\n";
-		}
-		$out.= "*'''".wfMsg('poc-sinfo-svn').":'''\n";
-		$aux = str_replace('$', '', PieceOfCode::Property('svn-revision'));
-		$aux = str_replace('LastChangedRevision: ', '', $aux);
-		$out.= "**'''".wfMsg('poc-sinfo-svn-revision').":''' r{$aux}\n";
-		$aux = str_replace('$', '', PieceOfCode::Property('svn-date'));
-		$aux = str_replace('LastChangedDate: ', '', $aux);
-		$out.= "**'''".wfMsg('poc-sinfo-svn-date').":''' {$aux}\n";
-		/* @} */
-		/*
-		 * Section: SVN Connections.
-		 * @{
-		 */
-		$out.= "== ".wfMsg('poc-sinfo-svn-connections')." ==\n";
-		$out.= "{| class=\"wikitable\"\n";
-		$out.= "|-\n";
-		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-svn-connections')."\n";
-		ksort($wgPieceOfCodeSVNConnections);
-		foreach($wgPieceOfCodeSVNConnections as $ksvnconn => $svnconn) {
-			$out.= "|-\n";
-			$out.= "!rowspan=\"3\" style=\"text-align:left\"|{$ksvnconn}\n";
-			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-url')."\n";
-			$out.= "|{$svnconn['url']}\n";
-			$out.= "|-\n";
-			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-username')."\n";
-			if($wgPieceOfCodeConfig['show']['svnusernames']) {
-				$out.= "|".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."\n";
-			} else {
-				$out.= "|".(isset($svnconn['username'])?wfMsg('poc-present'):wfMsg('poc-anonymous'))."\n";
-			}
-			$out.= "|-\n";
-			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-password')."\n";
-			if($wgPieceOfCodeConfig['show']['svnpasswords']) {
-				$out.= "|".($svnconn['password']?$svnconn['password']:wfMsg('poc-not-present'))."\n";
-			} else {
-				$out.= "|".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."\n";
-			}
-		}
-		$out.= "|}\n";
-		/* @} */
-		/*
-		 * Section: Stored Codes.
-		 * @{
-		 */
-		$out.= "== ".wfMsg('poc-sinfo-stored-codes')." ==\n";
-		$out.= "{| class=\"wikitable sortable\"\n";
-		$out.= "|-\n";
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-conn')."\n";
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-path')."\n";
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-lang')."\n";
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-rev')."\n";
-		if($wgPieceOfCodeConfig['stats']) {
-			$out.= "!".wfMsg('poc-sinfo-stored-codes-count')."\n";
-		}
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-user')."\n";
-		$out.= "!".wfMsg('poc-sinfo-stored-codes-date')."\n";
-		$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></html>\n";
-		if($wgPieceOfCodeConfig['stats']) {
-			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></html>\n";
-		}
-		if($isAdmin) {
-			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></html>\n";
-		}
-		$files = POCStoredCodes::Instance()->selectFiles();
-		foreach($files as $fileInfo) {
-			$out.= "|-\n";
-			$out.= "|{$fileInfo['connection']}\n";
-			$out.= "|{$fileInfo['path']}\n";
-			$out.= "|{$fileInfo['lang']}\n";
-			$out.= "|{$fileInfo['revision']}\n";
-			if($wgPieceOfCodeConfig['stats']) {
-				$out.= "|{$fileInfo['count']}\n";
-			}
-			$out.= "|[[User:{$fileInfo['user']}|{$fileInfo['user']}]]\n";
-			$out.= "|{$fileInfo['timestamp']}\n";
-			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
-			$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></html>\n";
-			if($wgPieceOfCodeConfig['stats']) {
-				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=page_stats&code={$fileInfo['code']}");
-				$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
-			}
-			if($isAdmin) {
-				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=delete&code={$fileInfo['code']}");
-				$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></a></html>\n";
-			}
-		}
-		$out.= "|}\n";
-		/* @} */
+		$this->_bsExtensionInformation($out);
+		$this->_bsSVNConnections($out);
+		$this->_bsStoredCodes($out, $isAdmin);
+		$this->_bsConfiguration($out);
+		$this->_bsLinks($out);
+
+		$wgOut->addWikiText($out);
+	}
+	/**
+	 * This is an extension of method <b>basicInformation</b>. It adds
+	 * section "Configuration"
+	 * @param $out Output text to be appended with a new seccion.
+	 */
+	protected function _bsConfiguration(&$out) {
+		global	$wgPieceOfCodeConfig;
 		/*
 		 * Section: Configuration.
 		 * @{
@@ -465,6 +375,44 @@ class PieceOfCode extends SpecialPage {
 		$out.= "|".($wgPieceOfCodeConfig['show']['svnpasswords']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
 		$out.= "|}\n";
 		/* @} */
+	}
+	/**
+	 * This is an extension of method <b>basicInformation</b>. It adds
+	 * section "Extension information"
+	 * @param $out Output text to be appended with a new seccion.
+	 */
+	protected function _bsExtensionInformation(&$out) {
+		/*
+		 * Section: Extension information.
+		 * @{
+		 */
+		$out.= "== ".wfMsg('poc-sinfo-extension-information')." ==\n";
+		$out.= "*'''".wfMsg('poc-sinfo-name').":''' ".PieceOfCode::Property('name')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-version').":''' ".PieceOfCode::Property('version')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-description').":''' ".PieceOfCode::Property('_description')."\n";
+		$out.= "*'''".wfMsg('poc-sinfo-author').":'''\n";
+		foreach(PieceOfCode::Property('author') as $author) {
+			$out.= "**{$author}\n";
+		}
+		$out.= "*'''".wfMsg('poc-sinfo-url').":''' ".PieceOfCode::Property('url')."\n";
+		if($wgPieceOfCodeConfig['show']['installdir']) {
+			$out.= "*'''".wfMsg('poc-sinfo-installation-directory').":''' ".dirname(__FILE__)."\n";
+		}
+		$out.= "*'''".wfMsg('poc-sinfo-svn').":'''\n";
+		$aux = str_replace('$', '', PieceOfCode::Property('svn-revision'));
+		$aux = str_replace('LastChangedRevision: ', '', $aux);
+		$out.= "**'''".wfMsg('poc-sinfo-svn-revision').":''' r{$aux}\n";
+		$aux = str_replace('$', '', PieceOfCode::Property('svn-date'));
+		$aux = str_replace('LastChangedDate: ', '', $aux);
+		$out.= "**'''".wfMsg('poc-sinfo-svn-date').":''' {$aux}\n";
+		/* @} */
+	}
+	/**
+	 * This is an extension of method <b>basicInformation</b>. It adds
+	 * section "Links"
+	 * @param $out Output text to be appended with a new seccion.
+	 */
+	protected function _bsLinks(&$out) {
 		/*
 		 * Section: Links
 		 * @{
@@ -475,8 +423,120 @@ class PieceOfCode extends SpecialPage {
 		$out.= "*'''GoogleCode Proyect Site:''' http://code.google.com/p/pieceofcode-dr/\n";
 		$out.= "*'''GoogleCode Issues Trak:''' http://code.google.com/p/pieceofcode-dr/issues\n";
 		/* @} */
+	}
+	/**
+	 * This is an extension of method <b>basicInformation</b>. It adds
+	 * section "Stored Codes"
+	 * @param $out Output text to be appended with a new seccion.
+	 * @param $isAdmin Enables/Disables administration tools.
+	 * @param $full Limits table result to a configured amount of rows.
+	 */
+	protected function _bsStoredCodes(&$out, $isAdmin=false, $full=false) {
+		global	$wgPieceOfCodeExtensionWebDir;
+		global	$wgPieceOfCodeConfig;
 
-		$wgOut->addWikiText($out);
+		/*
+		 * Section: Stored Codes.
+		 * @{
+		 */
+		$out.= "== ".wfMsg('poc-sinfo-stored-codes')." ==\n";
+		$out.= "{| class=\"wikitable sortable\"\n";
+		$out.= "|-\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-conn')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-path')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-lang')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-rev')."\n";
+		if($wgPieceOfCodeConfig['stats']) {
+			$out.= "!".wfMsg('poc-sinfo-stored-codes-count')."\n";
+		}
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-user')."\n";
+		$out.= "!".wfMsg('poc-sinfo-stored-codes-date')."\n";
+		$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></html>\n";
+		if($wgPieceOfCodeConfig['stats']) {
+			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></html>\n";
+		}
+		if($isAdmin) {
+			$out.= "!class=\"unsortable\"|<html><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></html>\n";
+		}
+		$files = POCStoredCodes::Instance()->selectFiles(false, false, false, $full);
+		$i = 0;
+		$j = 1;
+		if($full) {
+			$j = 0;
+		}
+		foreach($files as $fileInfo) {
+			if($i < $wgPieceOfCodeConfig['show']['stored-limit']) {
+				$out.= "|-\n";
+				$out.= "|{$fileInfo['connection']}\n";
+				$out.= "|{$fileInfo['path']}\n";
+				$out.= "|{$fileInfo['lang']}\n";
+				$out.= "|{$fileInfo['revision']}\n";
+				if($wgPieceOfCodeConfig['stats']) {
+					$out.= "|{$fileInfo['count']}\n";
+				}
+				$out.= "|[[User:{$fileInfo['user']}|{$fileInfo['user']}]]\n";
+				$out.= "|{$fileInfo['timestamp']}\n";
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$fileInfo['connection']}&path={$fileInfo['path']}&revision={$fileInfo['revision']}");
+				$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-zoom-fit-best-24px.png\" alt=\"".wfMsg('poc-open')."\" title=\"".wfMsg('poc-open')."\"/></a></html>\n";
+				if($wgPieceOfCodeConfig['stats']) {
+					$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=page_stats&code={$fileInfo['code']}");
+					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-system-search-24px.png\" alt=\"".wfMsg('poc-sinfo-stat-pages')."\" title=\"".wfMsg('poc-sinfo-stat-pages')."\"/></a></html>\n";
+				}
+				if($isAdmin) {
+					$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=delete&code={$fileInfo['code']}");
+					$out.= "|<html><a href=\"{$auxUrl}\"><img src=\"{$wgPieceOfCodeExtensionWebDir}/images/gnome-process-stop-24px.png\" alt=\"".wfMsg('poc-delete')."\" title=\"".wfMsg('poc-delete')."\"/></a></html>\n";
+				}
+			} else {
+				break;
+			}
+			$i+=$j;
+		}
+		$out.= "|}\n";
+		if(!$full && count($files) > $wgPieceOfCodeConfig['show']['stored-limit']) {
+			$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=stored");
+			$out.= ": [{$auxUrl} ".wfMsg('poc-view-all')."]\n";
+		}
+		/* @} */
+	}
+	/**
+	 * This is an extension of method <b>basicInformation</b>. It adds
+	 * section "SVN Connections"
+	 * @param $out Output text to be appended with a new seccion.
+	 */
+	protected function _bsSVNConnections(&$out) {
+		global	$wgPieceOfCodeSVNConnections;
+		global	$wgPieceOfCodeConfig;
+		/*
+		 * Section: SVN Connections.
+		 * @{
+		 */
+		$out.= "== ".wfMsg('poc-sinfo-svn-connections')." ==\n";
+		$out.= "{| class=\"wikitable\"\n";
+		$out.= "|-\n";
+		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-svn-connections')."\n";
+		ksort($wgPieceOfCodeSVNConnections);
+		foreach($wgPieceOfCodeSVNConnections as $ksvnconn => $svnconn) {
+			$out.= "|-\n";
+			$out.= "!rowspan=\"3\" style=\"text-align:left\"|{$ksvnconn}\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-url')."\n";
+			$out.= "|{$svnconn['url']}\n";
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-username')."\n";
+			if($wgPieceOfCodeConfig['show']['svnusernames']) {
+				$out.= "|".(isset($svnconn['username'])?$svnconn['username']:wfMsg('poc-anonymous'))."\n";
+			} else {
+				$out.= "|".(isset($svnconn['username'])?wfMsg('poc-present'):wfMsg('poc-anonymous'))."\n";
+			}
+			$out.= "|-\n";
+			$out.= "!style=\"text-align:left\"|".wfMsg('poc-sinfo-svnconn-password')."\n";
+			if($wgPieceOfCodeConfig['show']['svnpasswords']) {
+				$out.= "|".($svnconn['password']?$svnconn['password']:wfMsg('poc-not-present'))."\n";
+			} else {
+				$out.= "|".($svnconn['password']?wfMsg('poc-present'):wfMsg('poc-not-present'))."\n";
+			}
+		}
+		$out.= "|}\n";
+		/* @} */
 	}
 	/**
 	 * @todo doc
@@ -631,7 +691,27 @@ class PieceOfCode extends SpecialPage {
 			$wgOut->addHTML($this->_errors->setLastError(wfMsg('poc-errmsg-stats-disabled')));
 		}
 	}
+	/**
+	 * @todo doc
+	 * @param $fontcode @todo doc
+	 */
+	protected function viewAllStoredCodes(array &$fontcode) {
+		global	$wgOut;
+		global	$wgUser;
 
+		$isAdmin = in_array('sysop', $wgUser->getGroups());
+
+		$this->enableTagHTML();
+
+		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
+		$out.= "__TOC__\n";
+		$out.= "__NOEDITSECTION__\n";
+
+		$this->_bsStoredCodes($out, $isAdmin, true);
+
+		$wgOut->addWikiText($out);
+	}
+	
 	/*
 	 * Public Class Methods.
 	 */
