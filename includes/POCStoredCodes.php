@@ -202,6 +202,7 @@ class POCStoredCodes {
 	 * @param $connection @todo doc
 	 * @param $filepath @todo doc
 	 * @param $revision @todo doc
+	 * @param $full @todo doc
 	 * @return @todo doc
 	 */
 	public function selectFiles($connection=false, $filepath=false, $revision=false, $full=true) {
@@ -384,12 +385,12 @@ class POCStoredCodes {
 				$dbr = &wfGetDB(DB_SLAVE);
 				$res = $dbr->insert($wgPieceOfCodeConfig['db-tablename'],
 				array(	'cod_connection'	=> $fileInfo['connection'],
-						'cod_code'		=> $fileInfo['code'],
-						'cod_path'		=> $fileInfo['path'],
-						'cod_lang'		=> $fileInfo['lang'],
-						'cod_revision'		=> $fileInfo['revision'],
-						'cod_upload_path'	=> $fileInfo['upload_path'],
-						'cod_user'		=> $fileInfo['user'],
+					'cod_code'		=> $fileInfo['code'],
+					'cod_path'		=> $fileInfo['path'],
+					'cod_lang'		=> $fileInfo['lang'],
+					'cod_revision'		=> $fileInfo['revision'],
+					'cod_upload_path'	=> $fileInfo['upload_path'],
+					'cod_user'		=> $fileInfo['user'],
 				));
 				if($res === true) {
 					$out = true;

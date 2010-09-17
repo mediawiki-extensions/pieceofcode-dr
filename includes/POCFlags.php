@@ -107,10 +107,12 @@ class POCFlags {
 		return $out;
 	}
 	/**
-	 * @todo doc
-	 * @param $code @todo doc
-	 * @param $value @todo doc
-	 * @param $type @todo doc
+	 * This method set a flag on database. It it doesn't exists, it creates
+	 * it.
+	 * @param $code Flag identification code.
+	 * @param $value Value to be set.
+	 * @param $type Type of value. When it's false, it tries to auto-detect
+	 * type of value.
 	 */
 	public function set($code, $value, $type=false) {
 		if($this->_dbtype == 'mysql') {
@@ -118,6 +120,9 @@ class POCFlags {
 
 			$row   = array();
 			$fType = 'flg_ivalue';
+			/*
+			 * Type auto-detection.
+			 */
 			if($type === false) {
 				if(is_string($value)) {
 					$type = 'S';
@@ -129,6 +134,9 @@ class POCFlags {
 					$type = 'F';
 				}
 			}
+			/*
+			 * Selecting field to store values.
+			 */
 			switch($type) {
 				case 'B':
 					$row['flg_bvalue'] = $value;
@@ -177,8 +185,8 @@ class POCFlags {
 	 * Protected Methods
 	 */
 	/**
-	 * @todo doc
-	 * @return @todo doc
+	 * This method checks existens for table of flags. 
+	 * @return Returns true if there where no errors. Otherwise, false.
 	 */
 	protected function createTable() {
 		$out = false;

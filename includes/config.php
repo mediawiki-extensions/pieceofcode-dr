@@ -110,6 +110,7 @@ $wgPieceOfCodeConfig['show']['updaloaddirs']	= true;
 $wgPieceOfCodeConfig['show']['svnusernames']	= true;
 $wgPieceOfCodeConfig['show']['svnpasswords']	= false;
 $wgPieceOfCodeConfig['show']['stored-limit']	= 20;
+$wgPieceOfCodeConfig['show']['authorslogo']	= true;
 /** 	@} */
 /**
  * Others.
