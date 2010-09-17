@@ -12,6 +12,11 @@
  * @date 2010-08-28
  */
 
+/**
+ * @class POCStats
+ *
+ * @todo doc
+ */
 class POCStats {
 	/**
 	 * @var POCStats
@@ -51,6 +56,11 @@ class POCStats {
 	/*
 	 * Public methods.
 	 */
+	/**
+	 * @todo doc
+	 * @param $code @todo doc
+	 * @return @return @todo doc
+	 */
 	public function getCodePages($code) {
 		$out = false;
 
@@ -62,7 +72,7 @@ class POCStats {
 			$globalCodes = array();
 
 			$dbr = &wfGetDB(DB_SLAVE);
-				
+
 			$sql =	"select	 cps_code       as code,\n".
 				"        page_id,\n".
 				"        cps_times      as times,\n".
@@ -88,6 +98,7 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	public function isEnabled() {
 		global	$wgPieceOfCodeConfig;
@@ -98,14 +109,20 @@ class POCStats {
 	 * Protected Methods
 	 */
 	/**
-	 * @todo doc
+	 * This methods launches all needed tables creations.
+	 * @return Returns true when there were no errors.
 	 */
 	protected function createTables() {
-		$this->createTablePagesList();
-		$this->createTableCodeAndPages();
+		$out = true;
+
+		$out&= $this->createTablePagesList();
+		$out&= $this->createTableCodeAndPages();
+
+		return $out;
 	}
 	/**
 	 * @todo doc
+	 * return @todo doc
 	 */
 	protected function createTableCodeAndPages() {
 		$out = false;
@@ -121,7 +138,6 @@ class POCStats {
 					"        cps_text_id    int(10) unsigned not null,\n".
 					"        cps_times      int(10) unsigned not null default '1',\n".
 					"        cps_timestamp  timestamp not null default current_timestamp,\n".
-
 					"        primary key (cps_code, cps_text_id)\n".
 					")";
 				$error = $dbr->query($sql);
@@ -139,6 +155,7 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * return @todo doc
 	 */
 	protected function createTablePagesList() {
 		$out = false;
@@ -169,13 +186,19 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function removeObsolete() {
-		$this->removeObsoleteTexts();
-		$this->removeObsoleteCodeAndPages();
+		$out = true;
+
+		$out&=$this->removeObsoleteTexts();
+		$out&=$this->removeObsoleteCodeAndPages();
+
+		return $out;
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function removeObsoleteCodeAndPages() {
 		$out = false;
@@ -216,6 +239,7 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function removeObsoleteTexts() {
 		$out = false;
@@ -258,14 +282,20 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function updateNews() {
-		$this->updateNewTexts();
-		$this->updateCodesAndPages();
-		$this->updateZeroCounts();
+		$out = true;
+
+		$out&=$this->updateNewTexts();
+		$out&=$this->updateCodesAndPages();
+		$out&=$this->updateZeroCounts();
+
+		return $out;
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function updateCodesAndPages() {
 		$out = false;
@@ -336,6 +366,7 @@ class POCStats {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
 	 */
 	protected function updateNewTexts() {
 		$out = false;
@@ -371,6 +402,10 @@ class POCStats {
 
 		return $out;
 	}
+	/**
+	 * @todo doc
+	 * @return @todo doc
+	 */
 	protected function updateZeroCounts() {
 		$out = false;
 

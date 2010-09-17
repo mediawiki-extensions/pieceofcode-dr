@@ -157,7 +157,7 @@ class PieceOfCode extends SpecialPage {
 
 		switch($fontcode['action']) {
 			case 'delete':
-				$this->deleteFontCode(&$fontcode);
+				$this->deleteFontCode($fontcode);
 				break;
 			case 'show':
 				if($wgEnableUploads && $fontcode['showit']) {
@@ -165,21 +165,21 @@ class PieceOfCode extends SpecialPage {
 					break;
 				}
 			case 'page_stats':
-				$this->statPagesByCode(&$fontcode);
+				$this->statPagesByCode($fontcode);
 				break;
 			case 'stored':
-				$this->viewAllStoredCodes(&$fontcode);
+				$this->viewAllStoredCodes($fontcode);
 				break;
 			default:
-				$this->basicInformation();
+				$this->basicInformation($fontcode);
 		}
 	}
 	/**
-	 * @todo doc
-	 * @param $input @todo doc
-	 * @param $params @todo doc
-	 * @param $parser @todo doc
-	 * @return @todo doc
+	 * This method is the parser of tags &lt;pieceofcode&gt; and &lt;/pieceofcode&gt;.
+	 * @param $input Raw data contained by tags.
+	 * @param $params List of attributes.
+	 * @param $parser Pointer to parser (It also can be pointed using $wgParser).
+	 * @return Retruns resulting text to inserted insted of tags.
 	 */
 	public function parse($input, array $params, $parser) {
 		/*
@@ -187,10 +187,12 @@ class PieceOfCode extends SpecialPage {
 		 * some formatted XML text or an error message.
 		 */
 		$out = "";
+
 		$codeExtractor = new POCCodeExtractor();
 
 		$this->_errors->clearError();
 		$out.= $codeExtractor->load($input, $params, $parser);
+
 		if($this->_errors->ok()) {
 			$out.= $codeExtractor->show();
 		}
@@ -198,9 +200,8 @@ class PieceOfCode extends SpecialPage {
 		return $out;
 	}
 	/**
-	 * @todo doc
-	 * @param $name @todo doc
-	 * @return @todo doc
+	 * @param $name Name of a variable to be queried.
+	 * @return Retrurns a default value for a given variable name.
 	 */
 	public function varDefault($name) {
 		return (isset($this->_varDefaults[$name])?$this->_varDefaults[$name]:'');
@@ -210,46 +211,9 @@ class PieceOfCode extends SpecialPage {
 	 * Protected Methods.
 	 */
 	/**
-	 * @todo doc
+	 * This method appends the authors logo and link.
+	 * @param $out Output text to be appended with a new information.
 	 */
-	protected function enableTagHTML() {
-		global	$wgRawHtml;
-		global	$wgParser;
-
-		$wgRawHtml = true;
-		/*
-		 * Resetting core tags to enable tag <html>
-		 * Only, from version 1.17 and above.
-		 * @{
-		 */
-		if(class_exists('CoreTagHooks')) {
-			CoreTagHooks::register($wgParser);
-		}
-		/* @} */
-	}
-	/**
-	 * Prints basic information on Special:PieceOfCode
-	 */
-	protected function basicInformation() {
-		global	$wgOut;
-		global	$wgUser;
-
-		$isAdmin = in_array('sysop', $wgUser->getGroups());
-
-		$this->enableTagHTML();
-
-		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
-		$out.= "__TOC__\n";
-		$out.= "__NOEDITSECTION__\n";
-
-		$this->_bsExtensionInformation($out);
-		$this->_bsSVNConnections($out);
-		$this->_bsStoredCodes($out, $isAdmin);
-		$this->_bsConfiguration($out);
-		$this->_bsLinks($out);
-
-		$wgOut->addWikiText($out);
-	}
 	/**
 	 * This is an extension of method <b>basicInformation</b>. It adds
 	 * section "Configuration"
@@ -538,9 +502,52 @@ class PieceOfCode extends SpecialPage {
 		$out.= "|}\n";
 		/* @} */
 	}
+	protected function appendAuthorLogo(&$out) {
+		global	$wgPieceOfCodeConfig;
+		if($wgPieceOfCodeConfig['show']['authorslogo']) {
+			$this->enableTagHTML();
+			$out.= "\t\t<html>\n";
+			$out.= "\t\t\t<div style=\"float:right;text-align:center;\">\n";
+			$out.= "\t\t\t\t<a href=\"http://wiki.daemonraco.com/\">\n";
+			$out.= "\t\t\t\t\t<img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/>\n";
+			$out.= "\t\t\t\t</a><br/>\n";
+			$out.= "\t\t\t\t<a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a>\n";
+			$out.= "\t\t\t</div>\n";
+			$out.= "\t\t</html>\n";
+		}
+	}
+	/**
+	 * This method appends a some magic words to enable a table of contents.
+	 * @param $out Output text to be appended with a new information.
+	 */
+	protected function appendTOC(&$out) {
+		$this->appendAuthorLogo($out);
+		$out.= "__TOC__\n";
+		$out.= "__NOEDITSECTION__\n";
+	}
+	/**
+	 * Prints basic information on Special:PieceOfCode
+	 * @param $fontcode Is the list of parameter gotten from URL.
+	 */
+	protected function basicInformation(array &$fontcode) {
+		global	$wgOut;
+		global	$wgUser;
+
+		$isAdmin = in_array('sysop', $wgUser->getGroups());
+
+		$this->appendTOC($out);
+
+		$this->_bsExtensionInformation($out);
+		$this->_bsSVNConnections($out);
+		$this->_bsStoredCodes($out, $isAdmin);
+		$this->_bsConfiguration($out);
+		$this->_bsLinks($out);
+
+		$wgOut->addWikiText($out);
+	}
 	/**
 	 * @todo doc
-	 * @param $fontcode @todo doc
+	 * @param $fontcode Is the list of parameter gotten from URL.
 	 */
 	protected function deleteFontCode(array &$fontcode) {
 		global	$wgOut;
@@ -595,8 +602,27 @@ class PieceOfCode extends SpecialPage {
 		}
 	}
 	/**
+	 * This mathod activates raw html insertion on mediawiki pages. In other
+	 * words, it enables tags &lt;html&gt; and &lt;/html&gt;.
+	 */
+	protected function enableTagHTML() {
+		global	$wgRawHtml;
+		global	$wgParser;
+
+		$wgRawHtml = true;
+		/*
+		 * Resetting core tags to enable tag <html>
+		 * Only, from version 1.17 and above.
+		 * @{
+		 */
+		if(class_exists('CoreTagHooks')) {
+			CoreTagHooks::register($wgParser);
+		}
+		/* @} */
+	}
+	/**
 	 * @todo doc
-	 * @param $fontcode @todo doc
+	 * @param $fontcode Is the list of parameter gotten from URL.
 	 */
 	protected function showFontCode(array &$fontcode) {
 		$out = "";
@@ -610,6 +636,8 @@ class PieceOfCode extends SpecialPage {
 		$this->_errors->clearError();
 		$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
 
+		$this->appendTOC($out);
+
 		if($fileInfo) {
 			$tag = '';
 			if(!PieceOfCode::CheckSyntaxHighlightExtension($tag)) {
@@ -620,14 +648,14 @@ class PieceOfCode extends SpecialPage {
 			$st       = stat($filepath);
 			$lang     = $fileInfo['lang'];
 			if($st['size'] > $wgPieceOfCodeConfig['maxsize']['highlighting']) {
-				$out .= $this->_errors->setLastError(wfMsg('poc-errmsg-large-highlight', $wgPieceOfCodeConfig['maxsize']['highlighting']));
+				$out .= "*".$this->_errors->setLastError(wfMsg('poc-errmsg-large-highlight', $wgPieceOfCodeConfig['maxsize']['highlighting']));
 				$lang = "text";
 			}
 			if($st['size'] > $wgPieceOfCodeConfig['maxsize']['showing']) {
-				$out .= "<br/>".$this->_errors->setLastError(wfMsg('poc-errmsg-large-show', $wgPieceOfCodeConfig['maxsize']['showing']));
+				$out .= "*".$this->_errors->setLastError(wfMsg('poc-errmsg-large-show', $wgPieceOfCodeConfig['maxsize']['showing']));
 				$lang = "text";
 			}
-			$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']}</h2>";
+			$out.= "<h2>{$fileInfo['connection']}: {$fileInfo['path']}:{$fontcode['revision']} </h2>";
 			$out.= "<div class=\"PieceOfCode_code\"><{$tag} lang=\"{$lang}\" line=\"GESHI_NORMAL_LINE_NUMBERS\" start=\"1\">";
 			$out.= file_get_contents($filepath, false, null, -1, $wgPieceOfCodeConfig['maxsize']['showing']);
 			$out.= "</{$tag}></div>";
@@ -637,21 +665,27 @@ class PieceOfCode extends SpecialPage {
 			}
 			$out.=$this->_errors->getLastError();
 		}
+
+		$out.="<h2>".wfMsg('poc-sinfo-links')."</h2>\n";
+		$out.="*[[Special:PieceOfCode|Back]]\n";
+
 		$wgOut->addWikiText($out);
 	}
 	/**
 	 * @todo doc
-	 * @param $fontcode @todo doc
+	 * @param $fontcode Is the list of parameter gotten from URL.
 	 */
 	protected function statPagesByCode(array &$fontcode) {
 		global	$wgOut;
 		global	$wgPieceOfCodeConfig;
+
 		if($wgPieceOfCodeConfig['stats']) {
 			$out = "";
 
 			$code = POCStoredCodes::Instance()->getByCode($fontcode['code']);
 			if($this->_errors->ok()) {
-				$out.="__TOC__\n";
+				$this->appendTOC($out);
+
 				$out.="== ".wfMsg('poc-sinfo-information')." ==\n";
 				$out.="*'''".wfMsg('poc-sinfo-connection')."''': {$code['connection']}\n";
 				$out.="*'''".wfMsg('poc-sinfo-path')."''': {$code['path']}\n";
@@ -659,6 +693,9 @@ class PieceOfCode extends SpecialPage {
 				$out.="*'''".wfMsg('poc-sinfo-lang')."''': {$code['lang']}\n";
 				$auxUrl = Title::makeTitle(NS_USER, $code['user'])->getFullURL();
 				$out.="*'''".wfMsg('poc-sinfo-user')."''': [[User:{$code['user']}|{$code['user']}]]\n";
+				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$code['connection']}&path={$code['path']}&revision={$code['revision']}");
+				$out.="*[{$auxUrl} ".wfMsg('poc-view-source')."]\n";
+
 
 				$out.="== ".wfMsg('poc-sinfo-usage')." ==\n";
 				$out.="{|class=\"wikitable sortable\"\n";
@@ -681,9 +718,11 @@ class PieceOfCode extends SpecialPage {
 					$out.="|[[User:{$c['last_user']}|{$c['last_user']}]]\n";
 				}
 				$out.="|}\n";
+				$out.="== ".wfMsg('poc-sinfo-links')." ==\n";
+				$out.="*[[Special:PieceOfCode|Back]]\n";
 
 			} else {
-				$wgOut->addHTML($this->_errors->getLastError());
+				$out.= $this->_errors->getLastError();
 			}
 
 			$wgOut->addWikiText($out);
@@ -692,26 +731,28 @@ class PieceOfCode extends SpecialPage {
 		}
 	}
 	/**
-	 * @todo doc
-	 * @param $fontcode @todo doc
+	 * This method generates a special page content with a full list of source codes stored on
+	 * database.
+	 * @param $fontcode Is the list of parameter gotten from URL.
 	 */
 	protected function viewAllStoredCodes(array &$fontcode) {
+		$out = "";
+
 		global	$wgOut;
 		global	$wgUser;
 
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
 
-		$this->enableTagHTML();
-
-		$out = "\t\t<html><div style=\"float:right;text-align:center;\"><a href=\"http://wiki.daemonraco.com/\"><img src=\"http://wiki.daemonraco.com/wiki/dr.png\"/></a><br/><a href=\"http://wiki.daemonraco.com/\">DAEMonRaco</a></div></html>\n";
-		$out.= "__TOC__\n";
-		$out.= "__NOEDITSECTION__\n";
+		$this->appendTOC($out);
 
 		$this->_bsStoredCodes($out, $isAdmin, true);
 
+		$out.="== ".wfMsg('poc-sinfo-links')." ==\n";
+		$out.="*[[Special:PieceOfCode|Back]]\n";
+
 		$wgOut->addWikiText($out);
 	}
-	
+
 	/*
 	 * Public Class Methods.
 	 */
