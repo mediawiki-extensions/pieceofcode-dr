@@ -23,6 +23,10 @@ class POCStoredCodes {
 	 */
 	protected	$_errors;
 	/**
+	 * @var POCHistoryManager
+	 */
+	protected	$_history;
+	/**
 	 * @var bool
 	 */
 	protected	$_isLoaded;
@@ -34,7 +38,8 @@ class POCStoredCodes {
 	protected function __construct() {
 		global $wgDBtype;
 
-		$this->_errors = POCErrorsHolder::Instance();
+		$this->_errors  = POCErrorsHolder::Instance();
+		$this->_history = POCHistoryManager::Instance();
 
 		$this->_isLoaded    = false;
 		$this->_dbtype      = $wgDBtype;
@@ -83,18 +88,40 @@ class POCStoredCodes {
 			$this->_errors->clearError();
 			$fileInfo = $this->selectFiles($connection, $filepath, $revision);
 
+			/*
+			 * If the code doesn't exists, it tries to download and
+			 * stored it.
+			 */
 			if(!$fileInfo && $this->_errors->ok()) {
 				global	$wgUser;
 				global	$wgPieceOfCodeConfig;
 
+				/*
+				 * Checking if there are enough permission to
+				 * upload a new file.
+				 */
 				if($wgPieceOfCodeConfig['enableuploads'] && in_array('upload', $wgUser->getRights())) {
-					$code   = md5("{$connection}{$revision}{$filepath}");
+					/*
+					 * Calculating unique code.
+					 */
+					$code   = md5("{$connection}{$revision}{$filepath}");//@fixme this must be centralized.
+					/*
+					* Calculating upload path and creating
+					* every directory that is needed and
+					* doesn't exist.
+					*/
 					$auxDir = $code[0].DIRECTORY_SEPARATOR.$code[0].$code[1].DIRECTORY_SEPARATOR;
 					if(!is_dir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir)) {
 						mkdir($wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$auxDir, 0755, true);
 					}
 					$uploadPath  = $auxDir.$code."_".$revision."_".basename($filepath);
+					/*
+					 * Calculationg downloading path.
+					 */
 					$svnPath     = $conn['url'].$filepath;
+					/*
+					 * Build font-code information.
+					 */
 					$auxFileInfo = array(
 						'connection'	=> $connection,
 						'code'		=> $code,
@@ -105,11 +132,16 @@ class POCStoredCodes {
 						'user'		=> $wgUser->getName(),
 					);
 
+					/*
+					 * Getting file from SVN.
+					 */
 					if($this->_errors->ok() && $this->getSVNFile($conn, $auxFileInfo)) {
 						$this->insertFile($auxFileInfo);
 
 						if($this->_errors->ok()) {
-							$out = $this->selectFiles($connection, $filepath, $revision);
+							if($out = $this->selectFiles($connection, $filepath, $revision)) {
+								$this->_history->newDBCode($auxFileInfo['code'], "Adding file {$auxFileInfo['path']}:{$auxFileInfo['revision']} to database.");
+							}
 						}
 					} else {
 						if($this->_errors->ok()) {
@@ -152,8 +184,12 @@ class POCStoredCodes {
 			$upload_path = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path'];
 			unlink($upload_path);
 			if(!is_readable($upload_path)) {
+				$this->_history->deleteSVNCode($fileInfo['code'], "Removing file {$fileInfo['path']}:{$fileInfo['revision']} from disk.");
+
 				$this->deleteByCode($code);
-				$out = $this->_errors->ok();
+				if($out = $this->_errors->ok()) {
+					$this->_history->deleteDBCode($fileInfo['code'], "Removing file {$fileInfo['path']}:{$fileInfo['revision']} from disk.");
+				}
 			} else {
 				$this->_errors->setLastError(wfMsg('poc-errmsg-remove-file', $upload_path));
 			}
@@ -237,7 +273,7 @@ class POCStoredCodes {
 				$qry.=	"order by cod_count desc\n".
 					"limit ".($wgPieceOfCodeConfig['show']['stored-limit']+1)."\n";
 			}
-			
+
 			$res = $dbr->query($qry);
 			if($multiple) {
 				$out = array();
@@ -290,6 +326,8 @@ class POCStoredCodes {
 				} else {
 					die(__FILE__.":".__LINE__);
 				}
+			} else {
+				$out = true;
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
@@ -341,9 +379,17 @@ class POCStoredCodes {
 		$out = false;
 
 		global	$wgPieceOfCodeConfig;
-
+		/*
+		 * Calculation full-path to the font-code file.
+		 */
 		$filepath = $wgPieceOfCodeConfig['uploaddirectory'].DIRECTORY_SEPARATOR.$fileInfo['upload_path'];
+		/*
+		 * If it's not available, it tries to download it.
+		 */
 		if(!is_readable($filepath)) {
+			/*
+			 * Building SVN comand.
+			 */
 			$command = $wgPieceOfCodeConfig['svn-binary']." ";
 			$command.= "cat ";
 			$command.= "\"{$connInfo['url']}{$fileInfo['path']}\" ";
@@ -355,9 +401,13 @@ class POCStoredCodes {
 				$command.= "--password {$connInfo['password']} ";
 			}
 			$command.= "> \"{$filepath}\"";
+			/*
+			 * Attemting to download it running a SVN command.
+			 */
 			passthru($command, $error);
 
 			if(!$error && is_readable($filepath)) {
+				$this->_history->newSVNCode($fileInfo['code'], "Downloading file {$fileInfo['path']}:{$fileInfo['revision']} from SVN.");
 				$out = true;
 			} elseif($error && is_readable($filepath)) {
 				unlink($filepath);

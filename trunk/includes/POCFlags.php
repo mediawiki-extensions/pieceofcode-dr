@@ -212,6 +212,8 @@ class POCFlags {
 				} else {
 					die(__FILE__.":".__LINE__);
 				}
+			} else {
+				$out = true;
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));

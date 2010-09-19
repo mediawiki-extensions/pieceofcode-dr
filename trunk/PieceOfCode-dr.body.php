@@ -39,6 +39,7 @@ class PieceOfCode extends SpecialPage {
 						'svn-date'             => '$LastChangedDate$',
 						'svn-revision'         => '$LastChangedRevision$',
 	);
+
 	/**
 	 * @var POCErrorsHolder
 	 */
@@ -48,10 +49,9 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected	$_flags;
 	/**
-	 * Error messages prefix.
-	 * @var string
+	 * @var POCHistoryManager
 	 */
-	protected	$ERROR_PREFIX = 'DR_PieceOfCode Error: ';
+	protected	$_history;
 	/**
 	 * @var string
 	 */
@@ -107,6 +107,7 @@ class PieceOfCode extends SpecialPage {
 
 		$this->_errors         = POCErrorsHolder::Instance();
 		$this->_flags          = POCFlags::Instance();
+		$this->_history        = POCHistoryManager::Instance();
 		$this->_svnConnections = POCSVNConnections::Instance();
 		$this->_storedCodes    = POCStoredCodes::Instance();
 		$this->_stats          = POCStats::Instance();
@@ -224,6 +225,8 @@ class PieceOfCode extends SpecialPage {
 		/*
 		 * Section: Configuration.
 		 * @{
+		 *	General
+		 *	@{
 		 */
 		$out.= "== ".wfMsg('poc-sinfo-configuration')." ==\n";
 		$out.= "{|class=\"wikitable\"\n";
@@ -250,7 +253,7 @@ class PieceOfCode extends SpecialPage {
 			$out.= "|-\n";
 		}
 		if($wgPieceOfCodeConfig['show']['tablenames']) {
-			$out.= "!rowspan=\"4\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablenames')."\n";
+			$out.= "!rowspan=\"5\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablenames')."\n";
 			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename')."\n";
 			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n";
 			$out.= "|-\n";
@@ -263,8 +266,14 @@ class PieceOfCode extends SpecialPage {
 			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename-flags')."\n";
 			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-flags']}\n";
 			$out.= "|-\n";
+			$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-db-tablename-history')."\n";
+			$out.= "|{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-history']}\n";
+			$out.= "|-\n";
 		}
-
+		/*	@}
+		 *	Font-codes Configuration
+		 *	@{
+		 */
 		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-codes-cnf')."\n";
 		$out.= "|-\n";
 		$out.= "!rowspan=\"".count($wgPieceOfCodeConfig['fontcodes'])."\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-types-and-exts')."\n";
@@ -294,7 +303,10 @@ class PieceOfCode extends SpecialPage {
 		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-cnf-maxshowing')."\n";
 		$out.= "|colspan=\"2\"|".round($wgPieceOfCodeConfig['maxsize']['showing']/1024)."KB\n";
 		$out.= "|-\n";
-
+		/*	@}
+		 *	Statistics
+		 *	@{
+		 */
 		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-statistics')."\n";
 		$out.= "|-\n";
 		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-stat')."\n";
@@ -313,13 +325,16 @@ class PieceOfCode extends SpecialPage {
 				$out.= "|-\n";
 			}
 		}
-
+		/*	@}
+		 *	Miscellaneous
+		 *	@{
+		 */
 		$out.= "!colspan=\"3\"|".wfMsg('poc-sinfo-miscellaneous')."\n";
 		$out.= "|-\n";
 		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-internal-css')."\n";
 		$out.= "|colspan=\"2\"|".($wgPieceOfCodeConfig['autocss']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
 		$out.= "|-\n";
-		$out.= "!rowspan=\"6\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-flags')."\n";
+		$out.= "!rowspan=\"9\" style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-flags')."\n";
 		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-installdir')."\n";
 		$out.= "|".($wgPieceOfCodeConfig['show']['installdir']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
 		$out.= "|-\n";
@@ -337,6 +352,16 @@ class PieceOfCode extends SpecialPage {
 		$out.= "|-\n";
 		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-svnpasswords')."\n";
 		$out.= "|".($wgPieceOfCodeConfig['show']['svnpasswords']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-authorslogo')."\n";
+		$out.= "|".($wgPieceOfCodeConfig['show']['authorslogo']?wfMsg('poc-enabled'):wfMsg('poc-disabled'))."\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-stored-limit')."\n";
+		$out.= "|{$wgPieceOfCodeConfig['show']['stored-limit']}\n";
+		$out.= "|-\n";
+		$out.= "!style=\"text-align:left;\"|".wfMsg('poc-sinfo-show-history-limit')."\n";
+		$out.= "|{$wgPieceOfCodeConfig['show']['history-limit']}\n";
+		/*	@} */
 		$out.= "|}\n";
 		/* @} */
 	}
@@ -573,7 +598,10 @@ class PieceOfCode extends SpecialPage {
 					$out.="\t\t<p>".wfMsg('poc-sinfo-file-deleted')."</p>\n";
 				}
 
-				$out.= "\t\t\t\t<input type=\"button\" value=\"".wfMsg('poc-back')."\" onClick=\"document.location.href='{$returnUrl}';return false\"/>\n";
+				$out.= "\t\t\t\t<input type=\"button\" value=\"".wfMsg('poc-back')."\" onClick=\"document.location.href='{$returnUrl}';return false\" id=\"POC_BACK_BUTTON\"/>\n";
+				$out.= "\t\t\t\t<script type=\"text/javascript\">\n";
+				$out.= "\t\t\t\t\tdocument.getElementById('POC_BACK_BUTTON').focus();\n";
+				$out.= "\t\t\t\t</script>\n";
 			} else {
 				$sendUrl   = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action={$fontcode['action']}&code={$fontcode['code']}");
 				$cancelUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL();
@@ -589,9 +617,12 @@ class PieceOfCode extends SpecialPage {
 					$out.="\t\t\t</p>\n";
 					$out.="\t\t\t<p>\n";
 					$out.="\t\t\t\t<input type=\"submit\" value=\"".wfMsg('poc-yes')."\"/>\n";
-					$out.="\t\t\t\t<input type=\"reset\" value=\"".wfMsg('poc-no')."\" onClick=\"document.location.href='{$cancelUrl}';return false\"/>\n";
+					$out.="\t\t\t\t<input type=\"reset\" value=\"".wfMsg('poc-no')."\" onClick=\"document.location.href='{$cancelUrl}';return false\" id=\"POC_NO_BUTTON\"/>\n";
 					$out.="\t\t\t</p>\n";
 					$out.="\t\t</form>\n";
+					$out.= "\t\t\t\t<script type=\"text/javascript\">\n";
+					$out.= "\t\t\t\t\tdocument.getElementById('POC_NO_BUTTON').focus();\n";
+					$out.= "\t\t\t\t</script>\n";
 				} else {
 					$wgOut->addHTML($this->_errors->getLastError());
 				}
@@ -696,7 +727,6 @@ class PieceOfCode extends SpecialPage {
 				$auxUrl = Title::makeTitle(NS_SPECIAL,'PieceOfCode')->escapeFullURL("action=show&connection={$code['connection']}&path={$code['path']}&revision={$code['revision']}");
 				$out.="*[{$auxUrl} ".wfMsg('poc-view-source')."]\n";
 
-
 				$out.="== ".wfMsg('poc-sinfo-usage')." ==\n";
 				$out.="{|class=\"wikitable sortable\"\n";
 				$out.="|-\n";
@@ -718,6 +748,23 @@ class PieceOfCode extends SpecialPage {
 					$out.="|[[User:{$c['last_user']}|{$c['last_user']}]]\n";
 				}
 				$out.="|}\n";
+
+				$out.="== ".wfMsg('poc-sinfo-history')." ==\n";
+				$out.="{|class=\"wikitable\"\n";
+				$out.="|-\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-action')."\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-user')."\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-description')."\n";
+				$out.="!".wfMsg('poc-sinfo-stored-codes-timestamp')."\n";
+				foreach($this->_history->getHistory($fontcode['code']) as $h) {
+					$out.="|-\n";
+					$out.="|".wfMsg('poc-sinfo-history-'.$h['action'])."\n";
+					$out.="|[[User:{$h['user']}|{$h['user']}]]\n";
+					$out.="|{$h['description']}\n";
+					$out.="|{$h['timestamp']}\n";
+				}
+				$out.="|}\n";
+
 				$out.="== ".wfMsg('poc-sinfo-links')." ==\n";
 				$out.="*[[Special:PieceOfCode|Back]]\n";
 

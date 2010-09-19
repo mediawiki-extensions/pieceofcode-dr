@@ -8,6 +8,10 @@ Version 0.2:
 	* Adding class POCVersionManager in order to manage version upgrades of PieceOfCode.
 	* Almost all Specia:PieceOfCode works with wiki text.
 	* Pre-recursive parse inside tags.
+	* Triming list of Stored Codes in Special:PieceOfCode
+		** Adding a new sub-page to show them all.
+	* Adding POCHistoryManager
+		** Adding history for codes upload and codes removing.
 
 Version 0.1:
 	* Extension presentation.

@@ -68,9 +68,10 @@ $wgPieceOfCodeConfig['enableuploads']	= $wgEnableUploads;
  * 	@{
  */
 $wgPieceOfCodeConfig['db-tablename']		= 'poc_codes';
-$wgPieceOfCodeConfig['db-tablename-texts']	= 'poc_pages_list';
+$wgPieceOfCodeConfig['db-tablename-texts']	= 'poc_codes_pages';
 $wgPieceOfCodeConfig['db-tablename-ccounts']	= 'poc_codes_counts';
 $wgPieceOfCodeConfig['db-tablename-flags']	= 'poc_flags';
+$wgPieceOfCodeConfig['db-tablename-history']	= 'poc_codes_history';
 /** 	@} */
 /**
  * Font-code types.
@@ -110,6 +111,7 @@ $wgPieceOfCodeConfig['show']['updaloaddirs']	= true;
 $wgPieceOfCodeConfig['show']['svnusernames']	= true;
 $wgPieceOfCodeConfig['show']['svnpasswords']	= false;
 $wgPieceOfCodeConfig['show']['stored-limit']	= 20;
+$wgPieceOfCodeConfig['show']['history-limit']	= 50;
 $wgPieceOfCodeConfig['show']['authorslogo']	= true;
 /** 	@} */
 /**
