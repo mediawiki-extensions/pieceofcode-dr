@@ -29,6 +29,12 @@
  *	    PieceOfCode.</li>
  *	<li>Almost all Specia:PieceOfCode works with wiki text.</li>
  *	<li>Pre-recursive parse inside tags.</li>
+ *	<li>Triming list of Stored Codes in Special:PieceOfCode<ul>
+ *		<li>Adding a new sub-page to show them all.</li>
+ *	</ul></li>
+ *	<li>Adding POCHistoryManager<ul>
+ *		<li>Adding history for codes upload and codes removing.</li>
+ *	</ul></li>
  * </ul>
  * @subsection VERSION_0_1 Version 0.1
  * <ul>
@@ -47,9 +53,9 @@
  * @section Links Links
  * <ul>
  *	<li><a href="http://www.mediawiki.org/wiki/Extension:PieceOfCode" target="_blank">MediaWiki Extensions</a></li>
- *	<li><a href="http://wiki.daemonraco.com/wiki/PieceOfCode-dr" target="_blank">Official Documentation</a></li>
- *	<li><a href="http://code.google.com/p/pieceofcode-dr/" target="_blank">GoogleCode Proyect Site</a></li>
- *	<li><a href="http://code.google.com/p/pieceofcode-dr/issues" target="_blank">GoogleCode Issues Trak</a></li>
+ *	<li><a href="http://wiki.daemonraco.com/wiki/PieceOfCode-dr"      target="_blank">Official Documentation</a></li>
+ *	<li><a href="http://code.google.com/p/pieceofcode-dr/"            target="_blank">GoogleCode Proyect Site</a></li>
+ *	<li><a href="http://code.google.com/p/pieceofcode-dr/issues"      target="_blank">GoogleCode Issues Trak</a></li>
  * </ul>
  */
 ?>

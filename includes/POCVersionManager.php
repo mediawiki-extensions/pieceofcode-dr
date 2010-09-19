@@ -40,6 +40,7 @@ class POCVersionManager {
 		$this->_dbtype	= $wgDBtype;
 
 		$this->upToVersion(PieceOfCode::Property('version'));
+		$this->upRevision();
 	}
 	/**
 	 * Prevent users to clone the instance.
@@ -49,13 +50,28 @@ class POCVersionManager {
 	}
 
 	/*
-	 * Protected Methods
+	 * Public Methods
 	 */
+	/**
+	 * @return Returns latest svn-revsion number stored as flag on the data
+	 * base.
+	 */
+	public function getRevision() {
+		$revision = $this->_flags->get('POC_LATEST_REVISION');
+		if($revision === false) {
+			$aux = explode(' ', PieceOfCode::Property('svn-revision'));
+			if($this->_flags->set('POC_LATEST_REVISION', $aux[1], 'I')) {
+				die(__FILE__.':'.__LINE__);
+			}
+			$revision = $this->_flags->get('POC_LATEST_REVISION');
+		}
+		return $revision;
+	}
 	/**
 	 * @todo doc
 	 * @return @todo doc
 	 */
-	protected function getVersion() {
+	public function getVersion() {
 		$version = $this->_flags->get('POC_VERSION');
 		if($version === false) {
 			global	$wgDBprefix;
@@ -85,6 +101,27 @@ class POCVersionManager {
 	}
 	/**
 	 * @todo doc
+	 * @return @todo doc
+	 */
+	public function isLatestVersion() {
+		$out = false;
+
+		$version  = $this->getVersion();
+		$revision = $this->getRevision();
+
+		if(version_compare(PieceOfCode::Property('version'), $version) == 0) {
+			$aux = explode(' ', PieceOfCode::Property('svn-revision'));
+			$out = ($aux[1] == $revision);
+		}
+
+		return $out;
+	}
+
+	/*
+	 * Protected Methods
+	 */
+	/**
+	 * @todo doc
 	 * @param $version @todo doc
 	 * @return @todo doc
 	 */
@@ -95,15 +132,32 @@ class POCVersionManager {
 		return $this->_flags->get('POC_VERSION', true);
 	}
 	/**
-	 * This is the main method to launches every upgrade in the right way. 
-	 * @param $finalVersion This is the version number to reach. 
+	 * @todo doc
+	 */
+	protected function upRevision() {
+		if(!$this->isLatestVersion()) {
+			switch($this->getVersion()) {
+				case '0.2':
+					$this->upToVersion0_2_rev();
+					break;
+			}
+			$aux = explode(' ', PieceOfCode::Property('svn-revision'));
+			if($this->_flags->set('POC_LATEST_REVISION', $aux[1], 'I')) {
+				die(__FILE__.':'.__LINE__);
+			}
+				
+		}
+	}
+	/**
+	 * This is the main method to launches every upgrade in the right way.
+	 * @param $finalVersion This is the version number to reach.
 	 */
 	protected function upToVersion($finalVersion) {
 		$currentVersion = $this->getVersion();
 		$updates        = 0;
 		/*
 		 * This loop run until current version is the last one
-		 * 
+		 *
 		 * @code
 		 * $updates < 100
 		 * @endcode
@@ -111,7 +165,7 @@ class POCVersionManager {
 		 */
 		while(version_compare($currentVersion, $finalVersion) < 0 && $updates < 100) {
 			$updates++;
-			
+
 			switch($currentVersion) {
 				case '0.1':
 					$this->upToVersion0_2();
@@ -145,6 +199,11 @@ class POCVersionManager {
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
 		}
+	}
+	/**
+	 * @todo doc
+	 */
+	protected function upToVersion0_2_rev() {
 	}
 	/*
 	 * Public class methods

@@ -146,6 +146,8 @@ class POCStats {
 				} else {
 					die(__FILE__.":".__LINE__);
 				}
+			} else {
+				$out = true;
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
@@ -177,6 +179,8 @@ class POCStats {
 				} else {
 					die(__FILE__.":".__LINE__);
 				}
+			} else {
+				$out = true;
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
@@ -339,8 +343,8 @@ class POCStats {
 				$codes = array();
 				foreach($list as $k => $l) {
 					$code = md5("{$l['connection']}{$l['revision']}{$l['file']}");
-					$codes[$code]++;
-					$globalCodes[$code]++;
+					@$codes[$code]++;
+					@$globalCodes[$code]++;
 				}
 				foreach($codes as $k => $c) {
 					$sql =	"insert\n".
