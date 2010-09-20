@@ -140,12 +140,14 @@ class POCVersionManager {
 				case '0.2':
 					$this->upToVersion0_2_rev();
 					break;
+				default:
+					echo '<h1>'.$this->getVersion().'</h1>';
 			}
 			$aux = explode(' ', PieceOfCode::Property('svn-revision'));
 			if($this->_flags->set('POC_LATEST_REVISION', $aux[1], 'I')) {
 				die(__FILE__.':'.__LINE__);
 			}
-				
+
 		}
 	}
 	/**
@@ -186,14 +188,14 @@ class POCVersionManager {
 			global	$wgPieceOfCodeConfig;
 
 			$dbr = &wfGetDB(DB_SLAVE);
-			if(!$dbr->fieldExists($wgPieceOfCodeConfig['db-tablename'], 'cod_count')) {
-				$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
+			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename'])) {
+				if(!$dbr->fieldExists($wgPieceOfCodeConfig['db-tablename'], 'cod_count')) {
+					$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
 					"        add (cod_count int(10) not null default '-1')";
-				$error = $dbr->query($sql);
-				if($error === true) {
-					$out = true;
-				} else {
-					die(__FILE__.":".__LINE__);
+					$error = $dbr->query($sql);
+					if($error !== true) {
+						die(__FILE__.":".__LINE__);
+					}
 				}
 			}
 		} else {
@@ -204,6 +206,32 @@ class POCVersionManager {
 	 * @todo doc
 	 */
 	protected function upToVersion0_2_rev() {
+		if($this->_dbtype == 'mysql') {
+			global	$wgDBprefix;
+			global	$wgPieceOfCodeConfig;
+
+			$dbr = &wfGetDB(DB_SLAVE);
+			if($dbr->tableExists($wgPieceOfCodeConfig['db-tablename-texts'])) {
+				if(!$dbr->fieldExists($wgPieceOfCodeConfig['db-tablename-texts'], 'plst_scanned')) {
+					$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n".
+					"        add (plst_scanned boolean not null default false)";
+					$error = $dbr->query($sql);
+					if($error !== true) {
+						die(__FILE__.":".__LINE__);
+					}
+				}
+				if(!$dbr->fieldExists($wgPieceOfCodeConfig['db-tablename-texts'], 'plst_use_poc')) {
+					$sql =	"alter table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n".
+					"        add (plst_use_poc boolean not null default true)";
+					$error = $dbr->query($sql);
+					if($error !== true) {
+						die(__FILE__.":".__LINE__);
+					}
+				}
+			}
+		} else {
+			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
+		}
 	}
 	/*
 	 * Public class methods
