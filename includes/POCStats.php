@@ -171,6 +171,8 @@ class POCStats {
 				$sql =	"create table {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']} (\n".
 					"        plst_text_id    int(10) unsigned not null primary key,\n".
 					"        plst_page_id    int(10) unsigned not null,\n".
+					"        plst_scanned    boolean not null default false,\n".
+					"        plst_use_poc    boolean not null default false,\n".
 					"        plst_timestamp  timestamp not null default current_timestamp\n".
 					")";
 				$error = $dbr->query($sql);
@@ -312,8 +314,12 @@ class POCStats {
 
 			$dbr = &wfGetDB(DB_SLAVE);
 			$sql =	"select  old_text, old_id\n".
-				"from    {$wgDBprefix}text inner join {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}\n".
-				"                on (old_id = plst_text_id)\n";
+				"from    `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}` inner join `{$wgDBprefix}text`\n".
+				"                on (plst_text_id = old_id)\n".
+				"where   plst_use_poc = true\n".
+				" and    plst_text_id not in (\n".
+				"                select  cps_text_id\n".
+				"                from    `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}`)\n";
 			if($wgPieceOfCodeConfig['db-stats-limited']) {
 				$sql.="limit {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
 			}
@@ -324,9 +330,45 @@ class POCStats {
 				$matches        = array();
 				$list		= array();
 				$enterSeparator = '___ENTER_CHARACTER___';
+
+				/*
+				 * Loading tag usage and breaking it into
+				 * pieces.
+				 */
 				preg_match_all('/(<pieceofcode[^>]*>)(.*?)(<\/pieceofcode>)/', str_replace("\n", $enterSeparator, $row['old_text']), $matches);
-				foreach($matches[2] as $conf) {
-					$list[$i] = explode($enterSeparator, $conf);
+				/*
+				 * Loadint tag attributes.
+				 */
+				$params     = array();
+				$parseinput = array();
+				foreach($matches[1] as $mk => $conf) {
+					$conf = str_replace(array("pieceofcode","\t","<",">"), array(' ','','',''), $conf);
+					preg_match_all('/([a-z]+)\=\"([a-z]+)\"/', $conf, $pmatches);
+					$params[$mk] = array();
+					foreach($pmatches[1] as $k => $pm) {
+						$params[$mk][trim($pm)] = trim($pmatches[2][$k]);
+					}
+					unset($pmatches);
+					/*
+					 * Checking attribute 'parseinput'.
+					 */
+					$parseinput[$mk] = (isset($params[$mk]['parseinput']) && ($params[$mk]['parseinput']=='parseinput'||$params[$mk]['parseinput']='true'));
+				}
+
+				foreach($matches[2] as $mk => $conf) {
+					$conf = str_replace($enterSeparator, "\n", $conf);
+					/*
+					 * Applying recursive parsing if it needed.
+					 */
+					if($parseinput[$mk]) {
+						global	$wgParser;
+						global	$wgTitle;
+						/*
+						 * @fixme this is not working, check way.
+						 */
+						//$conf = $wgParser->preprocess($conf, $wgParser->getTitle(), $wgParser->getOptions());
+					}
+					$list[$i] = explode("\n", $conf);
 
 					foreach($list[$i] as $k => $l) {
 						if(trim($l)) {
@@ -342,7 +384,7 @@ class POCStats {
 				}
 				$codes = array();
 				foreach($list as $k => $l) {
-					$code = md5("{$l['connection']}{$l['revision']}{$l['file']}");
+					$code = md5("{$l['connection']}{$l['revision']}{$l['file']}");	//@fixme this must be centralized.
 					@$codes[$code]++;
 					@$globalCodes[$code]++;
 				}
@@ -352,13 +394,17 @@ class POCStats {
 						"                cps_code, cps_text_id, cps_times)\n".
 						"        values ('{$k}','{$row['old_id']}','{$c}')\n".
 						"                on duplicate key\n".
-						"                        update cps_times = '{$c}'";
+						"                        update cps_times     = '{$c}',".
+						"                               cps_timestamp = sysdate()";
 					$err = $dbr->query($sql);
 				}
 			}
 			foreach($globalCodes as $k => $c) {
 				$sql =	"update  {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n".
-					"set     cod_count = '{$c}'\n".
+					"set     cod_count = (\n".
+					"                select  sum(cps_times)\n".
+					"                from    `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}`\n".
+					"                where cps_code = '{$k}')\n".
 					"where   cod_code  = '{$k}'";
 				$err = $dbr->query($sql);
 			}
@@ -381,24 +427,41 @@ class POCStats {
 
 			$dbr = &wfGetDB(DB_SLAVE);
 			$sql =	"insert\n".
-				"        into {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}(plst_text_id, plst_page_id)\n".
-				"        select  old_id, page_id\n".
+				"        into `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}`(plst_text_id, plst_page_id)\n".
+				"        select  rev_text_id, page_id\n".
 				"        from    `{$wgDBprefix}page` inner join `{$wgDBprefix}revision`\n".
 				"                        on (page_latest = rev_id)\n".
-				"                inner join `{$wgDBprefix}text`\n".
-				"                        on (rev_text_id = old_id)\n".
-				"        where   old_id not in (\n".
+				"        where   rev_text_id not in (\n".
 				"                        select  plst_text_id\n".
-				"                        from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']})\n".
-				"         and    old_text like '%</pieceofcode>%'\n";
-			if($wgPieceOfCodeConfig['db-stats-limited']) {
-				$sql.="         limit {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
-			}
+				"                        from    `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}`)\n";
 			$error = $dbr->query($sql);
 			if($error === true) {
 				$out = true;
 			} else {
 				die(__FILE__.":".__LINE__);
+			}
+			if($out) {
+				$sql =	"select  *\n".
+					"from    `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}`\n".
+					"where   plst_scanned = false\n";
+				if($wgPieceOfCodeConfig['db-stats-limited']) {
+					$sql.="limit 0, {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
+				}
+				$res = $dbr->query($sql);
+				while($row = $dbr->fetchRow($res)) {
+					$sql =	"select  *\n".
+						"from    `{$wgDBprefix}text`\n".
+						"where   old_id = '{$row['plst_text_id']}'\n".
+						" and    old_text like '%</pieceofcode>%'\n";
+					$auxRes = $dbr->query($sql);
+					$sql =	"update  `{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-texts']}`\n".
+						"set     plst_scanned   = true,\n".
+						"        plst_use_poc   = ".($dbr->numRows($auxRes)>0?'true':'false').",\n".
+						"        plst_timestamp = sysdate()\n".
+						"where   plst_text_id = '{$row['plst_text_id']}'\n";
+						" and    plst_page_id = '{$row['plst_page_id']}'\n";
+					$err = $dbr->query($sql);
+				}
 			}
 		} else {
 			$this->_errors->setLastError(wfMsg('poc-errmsg-unknown-dbtype', $this->_dbtype));
@@ -426,7 +489,7 @@ class POCStats {
 				"                                inner join {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename-ccounts']}\n".
 				"                                        on (cod_code = cps_code))\n";
 			if($wgPieceOfCodeConfig['db-stats-limited']) {
-				$sql.="limit {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
+				$sql.="limit 0, {$wgPieceOfCodeConfig['db-stats-per-try']}\n";
 			}
 			$res = $dbr->query($sql);
 

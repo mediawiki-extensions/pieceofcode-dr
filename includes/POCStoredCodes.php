@@ -252,17 +252,17 @@ class POCStoredCodes {
 			$dbr = &wfGetDB(DB_SLAVE);
 			global	$wgDBprefix;
 
-			$qry.=	"select  cod_id          as id,\n".
-				"        cod_connection  as connection,\n".
-				"        cod_code        as code,\n".
-				"        cod_path        as path,\n".
-				"        cod_lang        as lang,\n".
-				"        cod_revision    as revision,\n".
-				"        cod_count       as count,\n".
-				"        cod_upload_path as upload_path,\n".
-				"        cod_user        as user,\n".
-				"        cod_timestamp   as timestamp\n".
-				"from	{$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n";
+			$qry =	"select  cod_id          as `id`,\n".
+				"        cod_connection  as `connection`,\n".
+				"        cod_code        as `code`,\n".
+				"        cod_path        as `path`,\n".
+				"        cod_lang        as `lang`,\n".
+				"        cod_revision    as `revision`,\n".
+				"        cod_count       as `count`,\n".
+				"        cod_upload_path as `upload_path`,\n".
+				"        cod_user        as `user`,\n".
+				"        cod_timestamp   as `timestamp`\n".
+				"from    {$wgDBprefix}{$wgPieceOfCodeConfig['db-tablename']}\n";
 
 			if(!$multiple) {
 				$qry.=	"where   cod_connection = '{$connection}'\n".
@@ -273,7 +273,6 @@ class POCStoredCodes {
 				$qry.=	"order by cod_count desc\n".
 					"limit ".($wgPieceOfCodeConfig['show']['stored-limit']+1)."\n";
 			}
-
 			$res = $dbr->query($qry);
 			if($multiple) {
 				$out = array();
