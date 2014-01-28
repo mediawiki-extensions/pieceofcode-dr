@@ -35,7 +35,6 @@ function PieceOfCode_HeadHooker(&$out, &$sk) {
 	global	$wgPieceOfCodeConfig;
 
 	if($wgPieceOfCodeConfig['autocss']) {
-		global	$wgScriptPath;
 		global	$wgPieceOfCodeExtensionWebDir;
 
 		$script = $wgPieceOfCodeExtensionWebDir.'/includes/style.css';
