@@ -12,6 +12,7 @@ Version 0.2:
 		** Adding a new sub-page to show them all.
 	* Adding POCHistoryManager
 		** Adding history for codes upload and codes removing.
+	* MW1.22 compatibility fixes.
 
 Version 0.1:
 	* Extension presentation.
