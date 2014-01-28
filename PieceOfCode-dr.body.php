@@ -92,11 +92,6 @@ class PieceOfCode extends SpecialPage {
 		$this->_versionManager = POCVersionManager::Instance();
 
 		/*
-		 * Loading messages.
-		 */
-		wfLoadExtensionMessages('PieceOfCode');
-
-		/*
 		 * Setting tag-kooks.
 		 */
 		if(defined('MEDIAWIKI')) {
@@ -130,15 +125,8 @@ class PieceOfCode extends SpecialPage {
 	 * @return @todo doc
 	 */
 	public function execute($par) {
-		$out = "";
-
 		global	$wgRequest;
-		global	$wgOut;
-		global	$wgPieceOfCodeSVNConnections;
-		global	$wgAllowExternalImages;
-		global	$wgPieceOfCodeConfig;
 		global	$wgEnableUploads;
-		global	$wgPieceOfCodeExtensionWebDir;
 
 		$this->setHeaders();
 
@@ -222,6 +210,7 @@ class PieceOfCode extends SpecialPage {
 	 */
 	protected function _bsConfiguration(&$out) {
 		global	$wgPieceOfCodeConfig;
+		global	$wgDBprefix;
 		/*
 		 * Section: Configuration.
 		 * @{
@@ -371,6 +360,7 @@ class PieceOfCode extends SpecialPage {
 	 * @param $out Output text to be appended with a new seccion.
 	 */
 	protected function _bsExtensionInformation(&$out) {
+		global	$wgPieceOfCodeConfig;
 		/*
 		 * Section: Extension information.
 		 * @{
@@ -577,10 +567,6 @@ class PieceOfCode extends SpecialPage {
 	protected function deleteFontCode(array &$fontcode) {
 		global	$wgOut;
 		global	$wgUser;
-		global	$wgPieceOfCodeSVNConnections;
-		global	$wgPieceOfCodeConfig;
-		global	$wgPieceOfCodeExtensionSysDir;
-		global	$wgPieceOfCodeExtensionWebDir;
 
 		$isAdmin = in_array('sysop', $wgUser->getGroups());
 		if($isAdmin) {
@@ -659,10 +645,7 @@ class PieceOfCode extends SpecialPage {
 		$out = "";
 
 		global	$wgOut;
-		global	$wgPieceOfCodeSVNConnections;
 		global	$wgPieceOfCodeConfig;
-		global	$wgPieceOfCodeExtensionSysDir;
-		global	$wgPieceOfCodeExtensionWebDir;
 
 		$this->_errors->clearError();
 		$fileInfo = $this->_storedCodes->getFile($fontcode['connection'], $fontcode['path'], $fontcode['revision']);
@@ -854,5 +837,3 @@ class PieceOfCode extends SpecialPage {
 		return PieceOfCode::$_Properties[$name];
 	}
 }
-
-?>

@@ -64,8 +64,6 @@ class POCStoredCodes {
 	public function getByCode($code) {
 		$out = false;
 
-		global	$wgPieceOfCodeConfig;
-
 		$this->_errors->clearError();
 		$out = $this->selectByCode($code);
 			
@@ -94,7 +92,6 @@ class POCStoredCodes {
 			 */
 			if(!$fileInfo && $this->_errors->ok()) {
 				global	$wgUser;
-				global	$wgPieceOfCodeConfig;
 
 				/*
 				 * Checking if there are enough permission to
